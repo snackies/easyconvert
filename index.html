@@ -85,7 +85,6 @@
         </div>
     </div>
 
-    <!-- แถบแท็บนำทางที่ขยายเครื่องมือพรีเมียมตัวใหม่ -->
     <div class="nav-tabs">
         <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf">📷 Image to PDF</button>
         <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img">📄 PDF to Image</button>
@@ -147,75 +146,72 @@
     let selectedFilesList = [];
     let userCountryCode = 'TH';
     const CRYPTO_SECRET = "EASYCONVERT_SECRET_PASSPHRASE_2026";
-    
-    // ตั้งค่าพิกัดคลังเก็บไฟล์ R2
-    const R2_ENDPOINT = "https://cloudflarestorage.com";
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
 
     const translations = {
         th: {
-              btn_upgrade: "👑 อัปเกรดพรีเมียม (Upgrade)",
-              premium_tier: "👑 สมาชิกพรีเมียม (PRO)",
-              ad_text: "📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]",
-              drop_instruction: "ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong>",
-               split_label: "🎯 ระบุช่วงหน้าเอกสารที่ต้องการแยก (เช่น 1-3, 5, 7-10):",
-               no_file: "ยังไม่ได้เลือกไฟล์",
-               btn_process: "🚀 เริ่มประมวลผลไฟล์ทันที",
-               privacy_seal: "🔒 100% Secure Sandbox: ไฟล์ทั้งหมดประมวลผลใน RAM เครื่องคุณ ไม่มีการส่งออกภายนอก",
-               affiliate_text: "💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: ",
-               affiliate_link: "🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ",
-               modal_title: "💎 ปลดล็อกฟีเจอร์พรีเมียม",
-               modal_desc: "ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร",
-               loading_price: "กำลังโหลดราคาภูมิภาค...",
-               btn_pay: "💳 ชำระเงินปลดล็อกระบบความเร็วสูง",
-               or_text: "- หรือเลือกสายฟรีแลกเวลา -",
-               btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
-               btn_close: "ปิดหน้าต่าง",
-               alert_cheat: "🔒 Security Alert: พบความพยายามเจาะระบบหรือแก้ไขโค้ดหน้าบ้าน! ระบบจะล้างเซสชันทันทีเพื่อความปลอดภัย",
-               alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
-               status_processing: "⏳ ระบบกำลังคิดเลขประมวลผลไฟล์บนแรมเครื่องของคุณอย่างปลอดภัย...",
-               status_done: "🎉 เสร็จสมบูรณ์! ดาวน์โหลดไฟล์เรียบร้อยแล้ว",
-               status_error: "❌ เกิดข้อผิดพลาดในการคำนวณไฟล์: ",
-               status_error_label: "❌ เกิดข้อผิดพลาด",
-               alert_ad_done: "🎉 ขอบคุณที่สนับสนุน! ระบบเปิดสิทธิ์ประมวลผลไฟล์ใหญ่ให้คุณเรียบร้อยแล้ว",
-               prompt_email: "กรุณากรอกอีเมลเพื่อตรวจสอบสิทธิ์ชำระเงิน:",
-               alert_pay_done: "🎉 ปลดล็อกโหมดโปรพรีเมียมถาวรเรียบร้อยแล้ว!",
-               switch_text: "สลับมาใช้งาน: ",
-               file_ready_text: "📷 เตรียมพร้อมประมวลผลจำนวน: {count} ไฟล์",
-               ad_countdown: "⏳ กำลังรับชมโฆษณา... ({time} วินาที)"
-               },
-               en: {
-               btn_upgrade: "👑 Upgrade to Pro",
-               premium_tier: "👑 Premium Member (PRO)",
-               ad_text: "📢 [Google AdSense Advertising Slot - Automated Revenue]",
-               drop_instruction: "Drag & drop files here or click to browse",
-               split_label: "🎯 Specify page ranges to split (e.g. 1-3, 5, 7-10):",
-               no_file: "No file selected",
-               btn_process: "🚀 Process File Now",
-               privacy_seal: "🔒 100% Secure Sandbox: All files are processed locally in RAM. No server uploads.",
-               affiliate_text: "💡 Productivity Setup Gear: ",
-               affiliate_link: "🛒 Check Recommended Ergonomic Office Cushion",
-               modal_title: "💎 Unlock Premium Features",
-               modal_desc: "Your file is large (over 15 MB) or this specific utility is a PRO feature.",
-               loading_price: "Loading regional pricing...",
-               btn_pay: "💳 Checkout to Activate Pro Mode",
-               or_text: "- Or stay free and support us -",
-               btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
-               btn_close: "Close Window",
-               alert_cheat: "🔒 Security Alert: Developer tools or client-side tampering detected. Session wiped for safety.",
-               alert_select_file: "Please select a file first!",
-               status_processing: "⏳ Processing assets safely inside your local browser memory sandbox...",
-               status_done: "🎉 Success! Output document downloaded seamlessly.",
-               status_error: "❌ Error processing files locally: ",
-               status_error_label: "❌ Processing Error",
-               alert_ad_done: "🎉 Thank you for the support! Large file capability unlocked for this session.",
-               prompt_email: "Enter your email address to check payment status:",
-               alert_pay_done: "🎉 Lifetime Premium Pro Mode unlocked successfully!",
-               switch_text: "Switched to tool: ",
-               file_ready_text: "📷 Ready to convert: {count} file(s)",
-               ad_countdown: "⏳ Watching Ad... ({time}s)"
-     }
+            btn_upgrade: "👑 อัปเกรดพรีเมียม (Upgrade)",
+            premium_tier: "👑 สมาชิกพรีเมียม (PRO)",
+            ad_text: "📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]",
+            drop_instruction: "ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong>",
+            split_label: "🎯 ระบุช่วงหน้าเอกสารที่ต้องการแยก (เช่น 1-3, 5, 7-10):",
+            no_file: "ยังไม่ได้เลือกไฟล์",
+            btn_process: "🚀 เริ่มประมวลผลไฟล์ทันที",
+privacy_seal: "🔒 100% Secure Sandbox: ไฟล์ทั้งหมดประมวลผลใน RAM เครื่องคุณ ไม่มีการส่งออกภายนอก",
+affiliate_text: "💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: ",
+affiliate_link: "🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ",
+modal_title: "💎 ปลดล็อกฟีเจอร์พรีเมียม",
+modal_desc: "ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร",
+loading_price: "กำลังโหลดราคาภูมิภาค...",
+btn_pay: "💳 ชำระเงินปลดล็อกระบบความเร็วสูง",
+or_text: "- หรือเลือกสายฟรีแลกเวลา -",
+btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
+btn_close: "ปิดหน้าต่าง",
+alert_cheat: "🔒 Security Alert: พบความพยายามเจาะระบบหรือแก้ไขโค้ดหน้าบ้าน! ระบบจะล้างเซสชันทันทีเพื่อความปลอดภัย",
+alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
+status_processing: "⏳ ระบบกำลังคิดเลขประมวลผลไฟล์บนแรมเครื่องของคุณอย่างปลอดภัย...",
+status_done: "🎉 เสร็จสมบูรณ์! ดาวน์โหลดไฟล์เรียบร้อยแล้ว",
+status_error: "❌ เกิดข้อผิดพลาดในการคำนวณไฟล์: ",
+status_error_label: "❌ เกิดข้อผิดพลาด",
+alert_ad_done: "🎉 ขอบคุณที่สนับสนุน! ระบบเปิดสิทธิ์ประมวลผลไฟล์ใหญ่ให้คุณเรียบร้อยแล้ว",
+prompt_email: "กรุณากรอกอีเมลเพื่อตรวจสอบสิทธิ์ชำระเงิน:",
+alert_pay_done: "🎉 ปลดล็อกโหมดโปรพรีเมียมถาวรเรียบร้อยแล้ว!",
+switch_text: "สลับมาใช้งาน: ",
+file_ready_text: "📷 เตรียมพร้อมประมวลผลจำนวน: {count} ไฟล์",
+ad_countdown: "⏳ กำลังรับชมโฆษณา... ({time} วินาที)"
+},
+en: {
+btn_upgrade: "👑 Upgrade to Pro",
+premium_tier: "👑 Premium Member (PRO)",
+ad_text: "📢 [Google AdSense Advertising Slot - Automated Revenue]",
+drop_instruction: "Drag & drop files here or click to browse",
+split_label: "🎯 Specify page ranges to split (e.g. 1-3, 5, 7-10):",
+no_file: "No file selected",
+btn_process: "🚀 Process File Now",
+privacy_seal: "🔒 100% Secure Sandbox: All files are processed locally in RAM. No server uploads.",
+affiliate_text: "💡 Productivity Setup Gear: ",
+affiliate_link: "🛒 Check Recommended Ergonomic Office Cushion",
+modal_title: "💎 Unlock Premium Features",
+modal_desc: "Your file is large (over 15 MB) or this specific utility is a PRO feature.",
+loading_price: "Loading regional pricing...",
+btn_pay: "💳 Checkout to Activate Pro Mode",
+or_text: "- Or stay free and support us -",
+btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
+btn_close: "Close Window",
+alert_cheat: "🔒 Security Alert: Developer tools or client-side tampering detected. Session wiped for safety.",
+alert_select_file: "Please select a file first!",
+status_processing: "⏳ Processing assets safely inside your local browser memory sandbox...",
+status_done: "🎉 Success! Output document downloaded seamlessly.",
+status_error: "❌ Error processing files locally: ",
+status_error_label: "❌ Processing Error",
+alert_ad_done: "🎉 Thank you for the support! Large file capability unlocked for this session.",
+prompt_email: "Enter your email address to check payment status:",
+alert_pay_done: "🎉 Lifetime Premium Pro Mode unlocked successfully!",
+switch_text: "Switched to tool: ",
+file_ready_text: "📷 Ready to convert: {count} file(s)",
+ad_countdown: "⏳ Watching Ad... ({time}s)"
+}
 };
 function changeLanguage(lang) {
 currentLang = lang;
@@ -229,6 +225,13 @@ el.innerText = translations[lang][key];
 }
 }
 });
+document.getElementById('tab-img2pdf').innerHTML = "📷 " + (lang === 'th' ? "Image to PDF" : "Image to PDF");
+document.getElementById('tab-pdf2img').innerHTML = "📄 " + (lang === 'th' ? "PDF to Image" : "PDF to Image");
+document.getElementById('tab-merge').innerHTML = "🧩 " + (lang === 'th' ? "Merge PDF" : "Merge PDF");
+document.getElementById('tab-split').innerHTML = "✂️ " + (lang === 'th' ? "Split PDF" : "Split PDF");
+document.getElementById('tab-compress').innerHTML = "🗜️ " + (lang === 'th' ? "PDF Compressor" : "PDF Compressor");
+document.getElementById('tab-pdf2word').innerHTML = "📝 " + (lang === 'th' ? "PDF to Word" : "PDF to Word");
+document.getElementById('tab-pdf2excel').innerHTML = "📊 " + (lang === 'th' ? "PDF to Excel" : "PDF to Excel");
 updatePricingDisplay();
 verifySecurePremiumToken();
 if (selectedFilesList.length === 0) {
@@ -285,7 +288,6 @@ badge.innerText = translations[currentLang].btn_upgrade;
 badge.className = "badge upgrade";
 document.getElementById('ad-top').style.display = 'block';
 }
-// ⚡ เครื่องยนต์คำนวณและแปลงไฟล์หลักหน้าบ้าน 100%
 async function executeFileProcessing() {
 if (selectedFilesList.length === 0) {
 alert(translations[currentLang].alert_select_file);
@@ -293,7 +295,6 @@ return;
 }
 let totalSizeMB = 0;
 for(let i=0; i<selectedFilesList.length; i++) { totalSizeMB += selectedFilesList[i].size / 1024 / 1024; }
-// บังคับล็อกเครื่องมือขั้นสูงสำหรับสายฟรี
 if (!isPremiumUser) {
 if (totalSizeMB > 15 || activeTool !== 'img2pdf') {
 document.getElementById('gate-modal').style.display = 'flex';
@@ -315,7 +316,7 @@ const pdfBytes = await pdfDoc.save();
 triggerLocalDownload(pdfBytes, "EasyConvert_Images.pdf", "application/pdf");
 }
 else if (activeTool === 'pdf2img') {
-const arrayBuffer = await selectedFilesList.arrayBuffer();
+const arrayBuffer = await selectedFilesList[0].arrayBuffer();
 const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
 const pdf = await loadingTask.promise;
 const page = await pdf.getPage(1);
@@ -339,7 +340,7 @@ triggerLocalDownload(pdfBytes, "EasyConvert_Merged.pdf", "application/pdf");
 }
 else if (activeTool === 'split') {
 const rangeInput = document.getElementById('page-range').value || "1";
-const arrayBuffer = await selectedFilesList.arrayBuffer();
+const arrayBuffer = await selectedFilesList[0].arrayBuffer();
 const srcPdf = await PDFLib.PDFDocument.load(arrayBuffer);
 const splitPdf = await PDFLib.PDFDocument.create();
 let pageIndices = [];
@@ -358,38 +359,33 @@ const pdfBytes = await splitPdf.save();
 triggerLocalDownload(pdfBytes, EasyConvert_Split_Page_${rangeInput}.pdf, "application/pdf");
 }
 else if (activeTool === 'compress') {
-const arrayBuffer = await selectedFilesList.arrayBuffer();
+const arrayBuffer = await selectedFilesList[0].arrayBuffer();
 const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
 const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-triggerLocalDownload(pdfBytes, "Compressed_" + selectedFilesList.name, "application/pdf");
+triggerLocalDownload(pdfBytes, "Compressed_" + selectedFilesList[0].name, "application/pdf");
 }
 else if (activeTool === 'pdf2word') {
-// --- 📝 ฟังก์ชันพรีเมียมใหม่: PDF to Word ---
-const arrayBuffer = await selectedFilesList.arrayBuffer();
+const arrayBuffer = await selectedFilesList[0].arrayBuffer();
 const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
 const pdf = await loadingTask.promise;
 let fullText = "";
-// วนลูปสแกนดึงข้อความจากทุกหน้า PDF มาร้อยต่อกันบนเครื่องผู้ใช้
 for (let i = 1; i <= pdf.numPages; i++) {
 const page = await pdf.getPage(i);
 const textContent = await page.getTextContent();
 const pageText = textContent.items.map(item => item.str).join(" ");
 fullText += pageText + "\n\n";
 }
-// สร้างไฟล์ข้อความคลีนสำเร็จรูปส่งออกให้ในรูปแบบไฟล์ข้อความเอกสารสากล (.doc/.txt)
 const bytes = new TextEncoder().encode(fullText);
-triggerLocalDownload(bytes, selectedFilesList.name.replace(".pdf", "") + "_EasyConvert.doc", "application/msword");
+triggerLocalDownload(bytes, selectedFilesList[0].name.replace(".pdf", "") + "_EasyConvert.doc", "application/msword");
 }
 else if (activeTool === 'pdf2excel') {
-// --- 📊 ฟังก์ชันพรีเมียมใหม่: PDF to Excel ---
-const arrayBuffer = await selectedFilesList.arrayBuffer();
+const arrayBuffer = await selectedFilesList[0].arrayBuffer();
 const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
 const pdf = await loadingTask.promise;
 let csvContent = "";
 for (let i = 1; i <= pdf.numPages; i++) {
 const page = await pdf.getPage(i);
 const textContent = await page.getTextContent();
-// ตรวจหาระยะช่องว่างระหว่างตัวอักษรเพื่อคัดแยกแถวคอลัมน์ตารางออกมาเป็นไฟล์ตารางข้อมูลสากล (.csv)
 let lastY = -1;
 let rowText = "";
 for (let item of textContent.items) {
@@ -402,8 +398,8 @@ lastY = item.transform[5];
 }
 csvContent += rowText + "\n";
 }
-const bytes = new TextEncoder().encode("\uFEFF" + csvContent); // เติม BOM เพื่อแก้ปัญหาภาษาไทยเพี้ยนใน Excel
-triggerLocalDownload(bytes, selectedFilesList.name.replace(".pdf", "") + "_EasyConvert.csv", "text/csv;charset=utf-8;");
+const bytes = new TextEncoder().encode("\uFEFF" + csvContent);
+triggerLocalDownload(bytes, selectedFilesList[0].name.replace(".pdf", "") + "_EasyConvert.csv", "text/csv;charset=utf-8;");
 }
 statusLabel.innerText = translations[currentLang].status_done;
 } catch (err) {
@@ -443,10 +439,9 @@ verifySecurePremiumToken();
 }
 }, 1000);
 }
-// 🔄 💵 ระบบสลับช่องทางรับชำระเงินทำงานแบบ Automation เต็มรูปแบบ
+// 🔄 ระบบชำระเงินอัตโนมัติคัดกรองแบบทวิภาคี (ไทย/สากล)
 function simulatePayment() {
 if (userCountryCode === 'TH') {
-// โหมดคนไทย: เปิดลิงก์พาผู้ใช้สแกนโอนเงินผ่านระบบพร้อมเพย์และแนบหลักฐานออโต้
 const email = prompt(translations[currentLang].prompt_email);
 if (email) {
 const generateHash = btoa(email + "_" + CRYPTO_SECRET);
@@ -457,9 +452,7 @@ closeGateModal();
 window.location.reload();
 }
 } else {
-// โหมดคนต่างชาติ: สลับเรียกหน้าต่างระบบชำระเงินสากลตัดผ่านบัตรเครดิตของ Stripe ทันที
 alert("Redirecting to secure Global Stripe Payment Gateway ($1.99 USD)...");
-// เมื่อสร้างระบบรับเงินบน Stripe เรียบร้อยแล้ว สามารถนำ Link มาใส่ตรงบรรทัดนี้ได้เลยครับ:
 // window.location.href = "stripe.com";
 const mockEmail = "inter_user@example.com";
 const generateHash = btoa(mockEmail + "_" + CRYPTO_SECRET);
@@ -469,6 +462,7 @@ closeGateModal();
 window.location.reload();
 }
 }
+// 🛠️ ตรวจจับการกดเปลี่ยนแท็บเครื่องมือ มั่นคง 100% ไม่เอ๋อค้าง
 document.querySelectorAll('.tab-btn').forEach(button => {
 button.addEventListener('click', function(e) {
 activeTool = this.getAttribute('data-tool');
@@ -486,12 +480,18 @@ document.getElementById('pay-btn').addEventListener('click', simulatePayment);
 document.getElementById('watch-ad-btn').addEventListener('click', startRewardedAd);
 document.getElementById('file-input').addEventListener('change', function(e) {
 if(e.target.files.length > 0) {
-selectedFilesList = e.target.files[0]; // โหลดไฟล์แรกสำหรับกลุ่ม Utility Core
-document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", e.target.files.length);
-// ขยายขอบข่ายการจับกลุ่มสำหรับเมนู Merge เพื่อรองรับหลายไฟล์
-if(activeTool === 'img2pdf' || activeTool === 'merge') {
 selectedFilesList = e.target.files;
+document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", e.target.files.length);
 }
+});
+// แนบกล่อง Drop Zone ลากไฟล์วางให้หน้าจอทำงาน
+const dropZone = document.getElementById('drop-area');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); });
+dropZone.addEventListener('drop', (e) => {
+e.preventDefault();
+if(e.dataTransfer.files.length > 0) {
+selectedFilesList = e.dataTransfer.files;
+document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", selectedFilesList.length);
 }
 });
 document.getElementById('process-btn').addEventListener('click', executeFileProcessing);
