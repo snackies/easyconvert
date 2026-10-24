@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
   p.append("cancel_url", origin + "/");
   p.append("line_items[0][quantity]", "1");
   p.append("line_items[0][price_data][currency]", "thb");
-  p.append("line_items[0][price_data][unit_amount]", "100"); // 29 บาท (หน่วยสตางค์)
+  p.append("line_items[0][price_data][unit_amount]", "2900"); // 29 บาท (หน่วยสตางค์)
   p.append("line_items[0][price_data][product_data][name]", "EasyConvert Pro (30 days)");
  
   try {
