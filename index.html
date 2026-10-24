@@ -39,10 +39,9 @@
         .right-header { display: flex; align-items: center; gap: 10px; }
         .lang-select { background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
         
-        .badge { background: #6c757d; color: white; padding: 4px 10px; font-size: 12px; border-radius: 20px; font-weight: bold; white-space: nowrap; }
+        .badge { background: #6c757d; color: white; padding: 4px 10px; font-size: 12px; border-radius: 20px; font-weight: bold; white-space: nowrap; cursor: pointer; }
         .badge.premium { background: linear-gradient(45deg, #ffc107, #ff9800); color: #333; }
         
-        /* 🛠️ แก้ไขดีไซน์แถบแท็บเพื่อป้องกันปัญหาล้นซ้อนกัน */
         .nav-tabs { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; background: rgba(0,0,0,0.04); padding: 6px; border-radius: 10px; flex-wrap: wrap; }
         .tab-btn { background: none; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; color: #555; transition: 0.2s; white-space: nowrap; }
         .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
@@ -72,8 +71,7 @@
     <div class="header-bar">
         <div class="logo">🌐 EasyConvert</div>
         <div class="right-header">
-            <!-- 🌐 ปุ่มสลับสองภาษาสำเร็จรูป -->
-            <select id="lang-toggle" class="lang-select" onchange="changeLanguage(this.value)">
+            <select id="lang-toggle" class="lang-select">
                 <option value="th">🇹🇭 TH</option>
                 <option value="en">🇺🇸 EN</option>
             </select>
@@ -82,16 +80,16 @@
     </div>
 
     <div class="nav-tabs">
-        <button id="tab-img2pdf" class="tab-btn active" onclick="switchTool('img2pdf')">📷 Image to PDF</button>
-        <button id="tab-pdf2img" class="tab-btn" onclick="switchTool('pdf2img')">📄 PDF to Image</button>
-        <button id="tab-merge" class="tab-btn" onclick="switchTool('merge')">🧩 Merge PDF</button>
-        <button id="tab-split" class="tab-btn" onclick="switchTool('split')">✂️ Split PDF</button>
-        <button id="tab-compress" class="tab-btn" onclick="switchTool('compress')">🗜️ PDF Compressor</button>
+        <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf">📷 Image to PDF</button>
+        <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img">📄 PDF to Image</button>
+        <button id="tab-merge" class="tab-btn" data-tool="merge">🧩 Merge PDF</button>
+        <button id="tab-split" class="tab-btn" data-tool="split">✂️ Split PDF</button>
+        <button id="tab-compress" class="tab-btn" data-tool="compress">🗜️ PDF Compressor</button>
     </div>
     
     <div id="ad-top" class="ad-placeholder" data-i18n="ad_text">📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]</div>
 
-    <div class="drop-zone" id="drop-area" onclick="document.getElementById('file-input').click()">
+    <div class="drop-zone" id="drop-area">
         <span style="font-size: 45px;">📥</span>
         <p id="drop-text" data-i18n="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong></p>
         <input type="file" id="file-input" style="display: none;" multiple>
@@ -122,13 +120,13 @@
         
         <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafafa;">
             <div style="font-weight: bold; color: #333;" id="price-text" data-i18n="loading_price">กำลังโหลดราคาภูมิภาค...</div>
-            <button class="btn-pay" onclick="simulatePayment()" data-i18n="btn_pay">💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro</button>
+            <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro</button>
         </div>
 
         <div style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือเลือกสายฟรีแลกเวลา -</div>
-        <button class="btn-watch" id="watch-ad-btn" onclick="startRewardedAd()" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง</button>
+        <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง</button>
         <br>
-        <button class="close-btn" onclick="closeGateModal()" data-i18n="btn_close">ปิดหน้าต่าง</button>
+        <button class="close-btn" id="close-modal-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
     </div>
 </div>
 
@@ -140,10 +138,11 @@
     let selectedFilesList = [];
     let userCountryCode = 'TH';
     const CRYPTO_SECRET = "EASYCONVERT_SECRET_PASSPHRASE_2026";
+    
+    const R2_ENDPOINT = "https://cloudflarestorage.com";
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
 
-    // 🌐 คลังข้อมูลคำแปลระบบ (Fixed Localization Library)
     const translations = {
         th: {
             free_tier: "สายฟรี (Free Tier)",
@@ -158,85 +157,76 @@
             affiliate_link: "🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ",
             modal_title: "💎 ปลดล็อกฟีเจอร์พรีเมียม",
             modal_desc: "ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร",
-loading_price: "กำลังโหลดราคาภูมิภาค...",
-btn_pay: "💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro",
-or_text: "- หรือเลือกสายฟรีแลกเวลา -",
-btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
-btn_close: "ปิดหน้าต่าง",
-alert_cheat: "🔒 Security Alert: พบความพยายามเจาะระบบหรือแก้ไขโค้ดหน้าบ้าน! ระบบจะล้างเซสชันทันทีเพื่อความปลอดภัย",
-alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
-status_processing: "⏳ ระบบกำลังคิดเลขประมวลผลไฟล์บนแรมเครื่องของคุณอย่างปลอดภัย...",
-status_done: "🎉 เสร็จสมบูรณ์! ดาวน์โหลดไฟล์เรียบร้อยแล้ว",
-status_error: "❌ เกิดข้อผิดพลาดในการคำนวณไฟล์: ",
-status_error_label: "❌ เกิดข้อผิดพลาด",
-alert_ad_done: "🎉 ขอบคุณที่สนับสนุน! ระบบเปิดสิทธิ์ประมวลผลไฟล์ใหญ่ให้คุณเรียบร้อยแล้ว",
-prompt_email: "กรุณากรอกอีเมลเพื่อเปิดใช้งานพรีเมียม:",
-alert_pay_done: "🎉 ปลดล็อกโหมดโปรพรีเมียมถาวรเรียบร้อยแล้ว!",
-switch_text: "สลับมาใช้งาน: ",
-file_ready_text: "📷 เตรียมพร้อมประมวลผลจำนวน: {count} ไฟล์",
-ad_countdown: "⏳ กำลังรับชมโฆษณา... ({time} วินาที)"
-},
-en: {
-free_tier: "Free Tier",
-premium_tier: "👑 Premium Member (PRO)",
-ad_text: "📢 [Google AdSense Advertising Slot - Automated Revenue]",
-drop_instruction: "Drag & drop files here or click to browse",
-split_label: "🎯 Specify page ranges to split (e.g. 1-3, 5, 7-10):",
-no_file: "No file selected",
-btn_process: "🚀 Process File Now",
-privacy_seal: "🔒 100% Secure Sandbox: All files are processed locally in RAM. No server uploads.",
-affiliate_text: "💡 Productivity Setup Gear: ",
-affiliate_link: "🛒 Check Recommended Ergonomic Office Cushion",
-modal_title: "💎 Unlock Premium Features",
-modal_desc: "Your file is large (over 15 MB) or this specific utility is a PRO feature.",
-loading_price: "Loading regional pricing...",
-btn_pay: "💳 Secure Checkout / Activate Pro",
-or_text: "- Or stay free and support us -",
-btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
-btn_close: "Close Window",
-alert_cheat: "🔒 Security Alert: Developer tools or client-side tampering detected. Session wiped for safety.",
-alert_select_file: "Please select a file first!",
-status_processing: "⏳ Processing assets safely inside your local browser memory sandbox...",
-status_done: "🎉 Success! Output document downloaded seamlessly.",
-status_error: "❌ Error processing files locally: ",
-status_error_label: "❌ Processing Error",
-alert_ad_done: "🎉 Thank you for the support! Large file capability unlocked for this session.",
-prompt_email: "Enter your email address to link premium pass activation:",
-alert_pay_done: "🎉 Lifetime Premium Pro Mode unlocked successfully!",
-switch_text: "Switched to tool: ",
-file_ready_text: "📷 Ready to convert: {count} file(s)",
-ad_countdown: "⏳ Watching Ad... ({time}s)"
-}
+            loading_price: "กำลังโหลดราคาภูมิภาค...",
+            btn_pay: "💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro",
+            or_text: "- หรือเลือกสายฟรีแลกเวลา -",
+            btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
+            btn_close: "ปิดหน้าต่าง",
+            alert_cheat: "🔒 Security Alert: พบความพยายามเจาะระบบหรือแก้ไขโค้ดหน้าบ้าน! ระบบจะล้างเซสชันทันทีเพื่อความปลอดภัย",
+            alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
+            status_processing: "⏳ ระบบกำลังคิดเลขประมวลผลไฟล์บนแรมเครื่องของคุณอย่างปลอดภัย...",
+            status_done: "🎉 เสร็จสมบูรณ์! ดาวน์โหลดไฟล์เรียบร้อยแล้ว",
+            status_error: "❌ เกิดข้อผิดพลาดในการคำนวณไฟล์: ",
+            status_error_label: "❌ เกิดข้อผิดพลาด",
+            alert_ad_done: "🎉 ขอบคุณที่สนับสนุน! ระบบเปิดสิทธิ์ประมวลผลไฟล์ใหญ่ให้คุณเรียบร้อยแล้ว",
+            prompt_email: "กรุณากรอกอีเมลเพื่อเปิดใช้งานพรีเมียม:",
+            alert_pay_done: "🎉 ปลดล็อกโหมดโปรพรีเมียมถาวรเรียบร้อยแล้ว!",
+            switch_text: "สลับมาใช้งาน: ",
+            file_ready_text: "📷 เตรียมพร้อมประมวลผลจำนวน: {count} ไฟล์",
+            ad_countdown: "⏳ กำลังรับชมโฆษณา... ({time} วินาที)"
+            },
+            en: {
+            free_tier: "Free Tier",
+            premium_tier: "👑 Premium Member (PRO)",
+            ad_text: "📢 [Google AdSense Advertising Slot - Automated Revenue]",
+            drop_instruction: "Drag & drop files here or click to browse",
+            split_label: "🎯 Specify page ranges to split (e.g. 1-3, 5, 7-10):",
+            no_file: "No file selected",
+            btn_process: "🚀 Process File Now",
+            privacy_seal: "🔒 100% Secure Sandbox: All files are processed locally in RAM. No server uploads.",
+            affiliate_text: "💡 Productivity Setup Gear: ",
+            affiliate_link: "🛒 Check Recommended Ergonomic Office Cushion",
+            modal_title: "💎 Unlock Premium Features",
+            modal_desc: "Your file is large (over 15 MB) or this specific utility is a PRO feature.",
+            loading_price: "Loading regional pricing...",
+            btn_pay: "💳 Secure Checkout / Activate Pro",
+            or_text: "- Or stay free and support us -",
+            btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
+            btn_close: "Close Window",
+            alert_cheat: "🔒 Security Alert: Developer tools or client-side tampering detected. Session wiped for safety.",
+            alert_select_file: "Please select a file first!",
+            status_processing: "⏳ Processing assets safely inside your local browser memory sandbox...",
+            status_done: "🎉 Success! Output document downloaded seamlessly.",
+            status_error: "❌ Error processing files locally: ",
+            status_error_label: "❌ Processing Error",
+            alert_ad_done: "🎉 Thank you for the support! Large file capability unlocked for this session.",
+            prompt_email: "Enter your email address to link premium pass activation:",
+            alert_pay_done: "🎉 Lifetime Premium Pro Mode unlocked successfully!",
+            switch_text: "Switched to tool: ",
+            file_ready_text: "📷 Ready to convert: {count} file(s)",
+            ad_countdown: "⏳ Watching Ad... ({time}s)"
+            }
 };
-// 🌐 🛠️ แก้ไขตัวแปลภาษาใน DOM ปลุกให้ปุ่มสลับภาษาทำงาน 100%
-window.changeLanguage = function(lang) {
+function changeLanguage(lang) {
 currentLang = lang;
 document.querySelectorAll('[data-i18n]').forEach(el => {
-const key = el.getAttribute('data-i18n');
-if (translations[lang][key]) {
-if (key === "drop_instruction") {
-el.innerHTML = translations[lang][key];
-} else {
-el.innerText = translations[lang][key];
-}
-}
+    const key = el.getAttribute('data-i18n');
+        if (translations[lang][key]) {
+            if (key === "drop_instruction") {
+                el.innerHTML = translations[lang][key];
+            } else {
+                el.innerText = translations[lang][key];
+            }
+        }
 });
-// อัปเดตภาษาบนข้อความหัวข้อของแถบเครื่องมือ
-document.getElementById('tab-img2pdf').innerHTML = "📷 " + (lang === 'th' ? "Image to PDF" : "Image to PDF");
-document.getElementById('tab-pdf2img').innerHTML = "📄 " + (lang === 'th' ? "PDF to Image" : "PDF to Image");
-document.getElementById('tab-merge').innerHTML = "🧩 " + (lang === 'th' ? "Merge PDF" : "Merge PDF");
-document.getElementById('tab-split').innerHTML = "✂️ " + (lang === 'th' ? "Split PDF" : "Split PDF");
-document.getElementById('tab-compress').innerHTML = "🗜️ " + (lang === 'th' ? "PDF Compressor" : "PDF Compressor");
-// บังคับเปลี่ยนสถานะป้ายบอกสิทธิ์และกล่องราคาตามภาษาที่สลับ
 updatePricingDisplay();
 verifySecurePremiumToken();
-// อัปเดตไฟล์สถานะปัจจุบันตามภาษา
 if (selectedFilesList.length === 0) {
 document.getElementById('file-status').innerText = translations[currentLang].no_file;
 } else {
 document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", selectedFilesList.length);
 }
-};
+}
 function initAntiCheat() {
 let devtoolsOpen = false;
 const threshold = 160;
@@ -377,7 +367,13 @@ link.href = URL.createObjectURL(blob); link.download = filename;
 document.body.appendChild(link); link.click(); document.body.removeChild(link);
 URL.revokeObjectURL(link.href);
 }
-window.startRewardedAd = function() {
+function openGateModal() {
+document.getElementById('gate-modal').style.display = 'flex';
+}
+function closeGateModal() {
+document.getElementById('gate-modal').style.display = 'none';
+}
+function startRewardedAd() {
 const btn = document.getElementById('watch-ad-btn');
 let timeLeft = 15; btn.disabled = true;
 const counter = setInterval(() => {
@@ -396,8 +392,8 @@ verifySecurePremiumToken();
 });
 }
 }, 1000);
-};
-window.simulatePayment = function() {
+}
+function simulatePayment() {
 const email = prompt(translations[currentLang].prompt_email);
 if (email) {
 const generateHash = btoa(email + "_" + CRYPTO_SECRET);
@@ -407,16 +403,26 @@ alert(translations[currentLang].alert_pay_done);
 closeGateModal();
 window.location.reload();
 }
-};
-window.switchTool = function(toolName) {
-activeTool = toolName;
+}
+// 🛠️ ตรวจจับระบบการสลับแถบเครื่องมือผ่าน Event Listeners ปลอดภัย ไม่พังแน่นอน
+document.querySelectorAll('.tab-btn').forEach(button => {
+button.addEventListener('click', function(e) {
+activeTool = this.getAttribute('data-tool');
 document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-event.target.classList.add('active');
-document.getElementById('split-options').style.display = (toolName === 'split') ? 'block' : 'none';
-const currentTabName = event.target.innerText;
+this.classList.add('active');
+document.getElementById('split-options').style.display = (activeTool === 'split') ? 'block' : 'none';
+const currentTabName = this.innerText;
 document.getElementById('file-status').innerText = translations[currentLang].switch_text + currentTabName;
-};
-window.closeGateModal = function() { document.getElementById('gate-modal').style.display = 'none'; };
+});
+});
+// ผูกระบบปุ่มและฟิลด์ทำงานหลักเข้าด้วยกัน
+document.getElementById('lang-toggle').addEventListener('change', function() {
+changeLanguage(this.value);
+});
+document.getElementById('user-badge').addEventListener('click', openGateModal);
+document.getElementById('close-modal-btn').addEventListener('click', closeGateModal);
+document.getElementById('pay-btn').addEventListener('click', simulatePayment);
+document.getElementById('watch-ad-btn').addEventListener('click', startRewardedAd);
 document.getElementById('file-input').addEventListener('change', function(e) {
 if(e.target.files.length > 0) {
 selectedFilesList = e.target.files;
@@ -426,6 +432,6 @@ document.getElementById('file-status').innerText = translations[currentLang].fil
 document.getElementById('process-btn').addEventListener('click', executeFileProcessing);
 // Bootstrap เริ่มต้นระบบ
 initAntiCheat();
-changeLanguage('th'); // เปิดมาหน้าแรกทำงานภาษาไทยหลักอัตโนมัติ
+changeLanguage('th');
 checkPurchasingPower();
 })();
