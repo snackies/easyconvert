@@ -11,4 +11,4 @@ module.exports = (req, res) => {
     console.error("verify failed:", e.message);
     return res.status(500).json({ premium: false, error: "server_error" });
   }
-};
+}
