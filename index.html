@@ -4,12 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyConvert - All-in-One Secure Document Utility</title>
-    <!-- โหลดไลบรารีประมวลผล PDF มาตรฐานสากลผ่าน CDN ความเร็วสูง -->
-    <script src="https://unpkg.com" defer></script>
-    <script src="https://cloudflare.com" defer></script>
-    
-    <!-- เชื่อมต่อไฟล์ดีไซน์ภายนอก -->
     <link rel="stylesheet" href="styles.css">
+    <!-- ไลบรารี (ปักเวอร์ชันชัดเจน) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <script src="translations.js" defer></script>
+    <script src="app.js" defer></script>
 </head>
 <body>
 
@@ -26,60 +27,57 @@
     </div>
 
     <div class="nav-tabs">
-        <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf">📷 Image to PDF</button>
-        <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img">📄 PDF to Image</button>
-        <button id="tab-merge" class="tab-btn" data-tool="merge">🧩 Merge PDF</button>
-        <button id="tab-split" class="tab-btn" data-tool="split">✂️ Split PDF</button>
-        <button id="tab-compress" class="tab-btn" data-tool="compress">🗜️ PDF Compressor</button>
-        <button id="tab-pdf2word" class="tab-btn" data-tool="pdf2word">📝 PDF to Word</button>
-        <button id="tab-pdf2excel" class="tab-btn" data-tool="pdf2excel">📊 PDF to Excel</button>
+        <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf" data-i18n="tab_img2pdf">📷 Image to PDF</button>
+        <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img" data-i18n="tab_pdf2img">📄 PDF to Image</button>
+        <button id="tab-merge" class="tab-btn" data-tool="merge" data-i18n="tab_merge">🧩 Merge PDF</button>
+        <button id="tab-split" class="tab-btn" data-tool="split" data-i18n="tab_split">✂️ Split PDF</button>
+        <button id="tab-compress" class="tab-btn" data-tool="compress" data-i18n="tab_compress">🗜️ PDF Compressor</button>
+        <button id="tab-pdf2word" class="tab-btn" data-tool="pdf2word" data-i18n="tab_pdf2word">📝 PDF to Word</button>
+        <button id="tab-pdf2excel" class="tab-btn" data-tool="pdf2excel" data-i18n="tab_pdf2excel">📊 PDF to Excel</button>
     </div>
-    
-    <div id="ad-top" class="ad-placeholder" data-i18n="ad_text">📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]</div>
+
+    <div id="ad-top" class="ad-placeholder" data-i18n="ad_text">📢 [พื้นที่โฆษณา]</div>
 
     <div class="drop-zone" id="drop-area">
         <span style="font-size: 45px;">📥</span>
         <p id="drop-text" data-i18n="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong></p>
-        <input type="file" id="file-input" style="display: none;" multiple>
+        <input type="file" id="file-input" style="display: none;" accept="image/*" multiple>
     </div>
-    
+
     <div id="split-options" class="dynamic-options">
         <div class="input-group">
-            <label id="label-split" for="page-range" data-i18n="split_label">🎯 ระบุช่วงหน้าเอกสารที่ต้องการแยก (เช่น 1-3, 5, 7-10):</label>
-            <input type="text" id="page-range" placeholder="1-2">
+            <label id="label-split" for="page-range" data-i18n="split_label">🎯 ระบุช่วงหน้า (เช่น 1-3, 5, 7-10):</label>
+            <input type="text" id="page-range" placeholder="1-3, 5">
         </div>
     </div>
-    
+
     <div id="file-status" style="margin-top: 15px; font-size: 13px; font-weight: bold; color: #333;" data-i18n="no_file">ยังไม่ได้เลือกไฟล์</div>
 
     <button class="btn-main" id="process-btn" data-i18n="btn_process">🚀 เริ่มประมวลผลไฟล์ทันที</button>
-    
-    <div class="privacy-seal" data-i18n="privacy_seal">🔒 100% Secure Sandbox: ไฟล์ทั้งหมดประมวลผลใน RAM เครื่องคุณ ไม่มีการส่งออกภายนอก</div>
+
+    <div class="privacy-seal" data-i18n="privacy_seal">🔒 ไฟล์ประมวลผลในเครื่องคุณ ไม่มีการอัปโหลด</div>
 
     <div style="margin-top: 25px; font-size: 11px; color: #666; border-top: 1px dashed #ccc; padding-top: 10px;">
-        <span data-i18n="affiliate_text">💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: </span><a href="#" style="color: var(--primary); text-decoration: none; font-weight: bold;" data-i18n="affiliate_link">🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ</a>
+        <span data-i18n="affiliate_text">💡 </span><a href="#" style="color: var(--primary); text-decoration: none; font-weight: bold;" data-i18n="affiliate_link">🛒 ลิงก์แนะนำ</a>
     </div>
 </div>
 
 <div class="modal" id="gate-modal">
     <div class="modal-content">
         <h3 data-i18n="modal_title">💎 ปลดล็อกฟีเจอร์พรีเมียม</h3>
-        <p data-i18n="modal_desc">ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร</p>
-        
+        <p data-i18n="modal_desc">ไฟล์ใหญ่เกิน 15 MB หรือเครื่องมือนี้สำหรับสมาชิกพรีเมียม</p>
+
         <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafafa;">
-            <div style="font-weight: bold; color: #333;" id="price-text" data-i18n="loading_price">กำลังโหลดราคาภูมิภาค...</div>
-            <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 ชำระเงินปลดล็อกระบบความเร็วสูง</button>
+            <div style="font-weight: bold; color: #333;" id="price-text">...</div>
+            <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 ชำระเงิน</button>
         </div>
 
-        <div style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือเลือกสายฟรีแลกเวลา -</div>
-        <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง</button>
+        <div style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือ -</div>
+        <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที</button>
         <br>
         <button class="close-btn" id="close-modal-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
     </div>
 </div>
 
-<!-- 💡 เรียกใช้โครงสร้าง Module แบบสัมบูรณ์ ป้องกันการโหลดสลับคิวพังบนระบบคลาวด์ -->
-<script src="translations.js"></script>
-<script type="module" src="app.js"></script>
 </body>
 </html>

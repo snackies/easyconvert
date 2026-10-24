@@ -1,396 +1,456 @@
 (function () {
-  let currentLang = "th";
-  let isPremiumUser = false;
-  let activeTool = "img2pdf";
-  let selectedFilesList = [];
-  let userCountryCode = "TH";
-  const CRYPTO_SECRET = "EASYCONVERT_SECRET_PASSPHRASE_2026";
+  "use strict";
 
-  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cloudflare.com";
+  const FREE_LIMIT_MB = 15;
+  const IMAGE_TOOLS = ["img2pdf"];
+  const MULTI_TOOLS = ["img2pdf", "merge"];
+
+  let currentLang = localStorage.getItem("ec_lang") || "th";
+  let isPremiumUser = false;
+  let oneTimePass = false; // สิทธิ์ใช้ฟรี 1 ครั้งจากการดูโฆษณา
+  let activeTool = "img2pdf";
+  let selectedFiles = [];
+  let userCountry = "TH";
+  let busy = false;
+
+  const $ = (id) => document.getElementById(id);
+  const t = (key) => (translations[currentLang] && translations[currentLang][key]) || key;
+
+  /* ---------- i18n / UI ---------- */
 
   function changeLanguage(lang) {
     currentLang = lang;
+    localStorage.setItem("ec_lang", lang);
+    document.documentElement.lang = lang;
+    $("lang-toggle").value = lang;
+
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
-      if (translations[lang][key]) {
-        if (key === "drop_instruction") {
-          el.innerHTML = translations[lang][key];
-        } else {
-          el.innerText = translations[lang][key];
-        }
-      }
+      const text = translations[lang][key];
+      if (!text) return;
+      if (key === "drop_instruction") el.innerHTML = text;
+      else el.textContent = text;
     });
 
-    document.getElementById("tab-img2pdf").innerHTML =
-      "📷 " + (lang === "th" ? "Image to PDF" : "Image to PDF");
-    document.getElementById("tab-pdf2img").innerHTML =
-      "📄 " + (lang === "th" ? "PDF to Image" : "PDF to Image");
-    document.getElementById("tab-merge").innerHTML =
-      "🧩 " + (lang === "th" ? "Merge PDF" : "Merge PDF");
-    document.getElementById("tab-split").innerHTML =
-      "✂️ " + (lang === "th" ? "Split PDF" : "Split PDF");
-    document.getElementById("tab-compress").innerHTML =
-      "🗜️ " + (lang === "th" ? "PDF Compressor" : "PDF Compressor");
-    document.getElementById("tab-pdf2word").innerHTML =
-      "📝 " + (lang === "th" ? "PDF to Word" : "PDF to Word");
-    document.getElementById("tab-pdf2excel").innerHTML =
-      "📊 " + (lang === "th" ? "PDF to Excel" : "PDF to Excel");
-
+    renderBadge();
     updatePricingDisplay();
-    verifySecurePremiumToken();
-
-    if (selectedFilesList.length === 0) {
-      document.getElementById("file-status").innerText =
-        translations[currentLang].no_file;
-    } else {
-      document.getElementById("file-status").innerText = translations[
-        currentLang
-      ].file_ready_text.replace("{count}", selectedFilesList.length);
-    }
+    updateStatus();
   }
 
-  function verifySecurePremiumToken() {
-    const savedToken = localStorage.getItem("ec_premium_hash");
-    const tokenSource = localStorage.getItem("ec_premium_user");
-    const badge = document.getElementById("user-badge");
-
-    if (savedToken && tokenSource) {
-      const expectedHash = btoa(tokenSource + "_" + CRYPTO_SECRET);
-      if (savedToken === expectedHash) {
-        isPremiumUser = true;
-        badge.innerText = translations[currentLang].premium_tier;
-        badge.className = "badge premium";
-        document.getElementById("ad-top").style.display = "none";
-        return;
-      }
+  function renderBadge() {
+    const badge = $("user-badge");
+    if (isPremiumUser) {
+      badge.textContent = t("premium_tier");
+      badge.className = "badge premium";
+    } else {
+      badge.textContent = t("btn_upgrade");
+      badge.className = "badge upgrade";
     }
-    badge.innerText = translations[currentLang].btn_upgrade;
-    badge.className = "badge upgrade";
-    document.getElementById("ad-top").style.display = "block";
+    $("ad-top").style.display = isPremiumUser ? "none" : "block";
   }
 
   function updatePricingDisplay() {
-    const priceElement = document.getElementById("price-text");
-    if (userCountryCode === "TH") {
-      priceElement.innerText =
-        currentLang === "th"
-          ? "👑 สมัครสมาชิกรายเดือน: เพียง 29 บาท"
-          : "👑 Premium Monthly: Only 29 THB";
+    const th = userCountry === "TH";
+    const el = $("price-text");
+    if (th) {
+      el.textContent = currentLang === "th"
+        ? "👑 พรีเมียม 30 วัน: เพียง 29 บาท"
+        : "👑 Premium 30 days: Only 29 THB";
     } else {
-      priceElement.innerText =
-        currentLang === "th"
-          ? "👑 สมาชิกพรีเมียมสากล: เพียง $1.99 USD"
-          : "👑 Global Premium Pass: Only $1.99 USD";
+      el.textContent = currentLang === "th"
+        ? "👑 พรีเมียม 30 วัน: เพียง $1.99 USD"
+        : "👑 Premium 30 days: Only $1.99 USD";
     }
   }
 
-  async function checkPurchasingPower() {
+  function updateStatus() {
+    $("file-status").textContent = selectedFiles.length === 0
+      ? t("no_file")
+      : t("file_ready_text").replace("{count}", selectedFiles.length);
+  }
+
+  /* ---------- Premium (ตรวจสอบฝั่งเซิร์ฟเวอร์) ---------- */
+
+  async function postJSON(url, body) {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return { ok: res.ok, data: await res.json().catch(() => ({})) };
+  }
+
+  async function verifyPremium() {
+    const token = localStorage.getItem("ec_token");
+    isPremiumUser = false;
+    if (token) {
+      try {
+        const { data } = await postJSON("/api/verify", { token });
+        isPremiumUser = !!data.premium;
+        if (!data.premium) localStorage.removeItem("ec_token");
+      } catch (e) {
+        /* ออฟไลน์/API ล่ม: ถือว่ายังไม่ใช่พรีเมียม */
+      }
+    }
+    renderBadge();
+  }
+
+  async function claimPaidSession() {
+    const params = new URLSearchParams(location.search);
+    const sid = params.get("session_id");
+    if (!sid) return;
+    history.replaceState(null, "", location.pathname);
+    $("file-status").textContent = t("pay_verifying");
     try {
-      const res = await fetch("https://ipapi.co");
+      const { ok, data } = await postJSON("/api/claim", { session_id: sid });
+      if (ok && data.token) {
+        localStorage.setItem("ec_token", data.token);
+        await verifyPremium();
+        alert(t("alert_pay_done"));
+      } else {
+        alert(t("alert_pay_unverified"));
+      }
+    } catch (e) {
+      alert(t("alert_pay_unverified"));
+    }
+    updateStatus();
+  }
+
+  async function startCheckout() {
+    const btn = $("pay-btn");
+    btn.disabled = true;
+    try {
+      const { ok, data } = await postJSON("/api/create-checkout", {});
+      if (ok && data.url) {
+        alert(t("pay_redirecting"));
+        location.href = data.url;
+        return;
+      }
+      alert(t("pay_failed"));
+    } catch (e) {
+      alert(t("pay_failed"));
+    }
+    btn.disabled = false;
+  }
+
+  async function detectCountry() {
+    try {
+      const res = await fetch("/api/geo");
       const data = await res.json();
-      userCountryCode = data.country_code || "TH";
+      userCountry = data.country || "TH";
     } catch (e) {}
     updatePricingDisplay();
   }
 
+  /* ---------- File selection ---------- */
+
+  function acceptFor(tool) {
+    return IMAGE_TOOLS.includes(tool) ? "image/*" : "application/pdf,.pdf";
+  }
+
+  function isValidFile(file, tool) {
+    if (IMAGE_TOOLS.includes(tool)) return file.type.startsWith("image/");
+    return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  }
+
+  function setFiles(fileList) {
+    const files = Array.from(fileList);
+    if (files.length === 0) return;
+    const valid = files.filter((f) => isValidFile(f, activeTool));
+    if (valid.length !== files.length) alert(t("alert_wrong_type"));
+    if (valid.length === 0) return;
+    selectedFiles = MULTI_TOOLS.includes(activeTool) ? valid : [valid[0]];
+    updateStatus();
+  }
+
+  function applyToolUI() {
+    const input = $("file-input");
+    input.accept = acceptFor(activeTool);
+    input.multiple = MULTI_TOOLS.includes(activeTool);
+    $("split-options").style.display = activeTool === "split" ? "block" : "none";
+  }
+
+  /* ---------- Processing ---------- */
+
+  function needsGate(totalMB) {
+    if (isPremiumUser || oneTimePass) return false;
+    return totalMB > FREE_LIMIT_MB || activeTool !== "img2pdf";
+  }
+
   async function executeFileProcessing() {
-    if (selectedFilesList.length === 0) {
-      alert(translations[currentLang].alert_select_file);
+    if (busy) return;
+    if (selectedFiles.length === 0) {
+      alert(t("alert_select_file"));
+      return;
+    }
+    const totalMB = selectedFiles.reduce((s, f) => s + f.size, 0) / 1024 / 1024;
+    if (needsGate(totalMB)) {
+      openGateModal();
       return;
     }
 
-    let totalSizeMB = 0;
-    for (let i = 0; i < selectedFilesList.length; i++) {
-      totalSizeMB += selectedFilesList[i].size / 1024 / 1024;
-    }
-
-    if (!isPremiumUser) {
-      if (totalSizeMB > 15 || activeTool !== "img2pdf") {
-        openGateModal();
-        return;
-      }
-    }
-
-    const statusLabel = document.getElementById("file-status");
-    statusLabel.innerText = translations[currentLang].status_processing;
-
+    busy = true;
+    const status = $("file-status");
+    status.textContent = t("status_processing");
     try {
-      if (activeTool === "img2pdf") {
-        const pdfDoc = await PDFLib.PDFDocument.create();
-        for (let i = 0; i < selectedFilesList.length; i++) {
-          const arrayBuffer = await selectedFilesList[i].arrayBuffer();
-          let img =
-            selectedFilesList[i].type === "image/png"
-              ? await pdfDoc.embedPng(arrayBuffer)
-              : await pdfDoc.embedJpg(arrayBuffer);
-          const page = pdfDoc.addPage([img.width, img.height]);
-          page.drawImage(img, {
-            x: 0,
-            y: 0,
-            width: img.width,
-            height: img.height,
-          });
-        }
-        const pdfBytes = await pdfDoc.save();
-        triggerLocalDownload(
-          pdfBytes,
-          "EasyConvert_Images.pdf",
-          "application/pdf",
-        );
-      } else if (activeTool === "pdf2img") {
-        const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-        const pdf = await loadingTask.promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.5 });
-        const canvas = document.createElement("canvas");
-        const context = canvas.getContext("2d");
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        await page.render({ canvasContext: context, viewport: viewport })
-          .promise;
-        canvas.toBlob((blob) => {
-          triggerBlobDownload(blob, "EasyConvert_Page_1.jpg");
-        }, "image/jpeg");
-      } else if (activeTool === "merge") {
-        const mergedPdf = await PDFLib.PDFDocument.create();
-        for (let i = 0; i < selectedFilesList.length; i++) {
-          const arrayBuffer = await selectedFilesList[i].arrayBuffer();
-          const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-          const copiedPages = await mergedPdf.copyPages(
-            pdfDoc,
-            pdfDoc.getPageIndices(),
-          );
-          copiedPages.forEach((page) => mergedPdf.addPage(page));
-        }
-        const pdfBytes = await mergedPdf.save();
-        triggerLocalDownload(
-          pdfBytes,
-          "EasyConvert_Merged.pdf",
-          "application/pdf",
-        );
-      } else if (activeTool === "split") {
-        const rangeInput = document.getElementById("page-range").value || "1";
-        const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-        const srcPdf = await PDFLib.PDFDocument.load(arrayBuffer);
-        const splitPdf = await PDFLib.PDFDocument.create();
-
-        let pageIndices = [];
-        if (rangeInput.includes("-")) {
-          const parts = rangeInput.split("-");
-          const start = parseInt(parts[0]) - 1;
-          const end = parseInt(parts[1]) - 1;
-          for (let i = start; i <= end; i++) {
-            if (i < srcPdf.getPageCount()) pageIndices.push(i);
-          }
-        } else {
-          const idx = parseInt(rangeInput) - 1;
-          if (idx < srcPdf.getPageCount()) pageIndices = [idx];
-        }
-
-        const copiedPages = await splitPdf.copyPages(srcPdf, pageIndices);
-        copiedPages.forEach((page) => splitPdf.addPage(page));
-        const pdfBytes = await splitPdf.save();
-        triggerLocalDownload(
-          pdfBytes,
-          `EasyConvert_Split_Page_${rangeInput}.pdf`,
-          "application/pdf",
-        );
-      } else if (activeTool === "compress") {
-        const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-        const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-        triggerLocalDownload(
-          pdfBytes,
-          "Compressed_" + selectedFilesList[0].name,
-          "application/pdf",
-        );
-      } else if (activeTool === "pdf2word") {
-        const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-        const pdf = await loadingTask.promise;
-        let fullText = "";
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          const pageText = textContent.items.map((item) => item.str).join(" ");
-          fullText += pageText + "\n\n";
-        }
-
-        const bytes = new TextEncoder().encode(fullText);
-        triggerLocalDownload(
-          bytes,
-          selectedFilesList[0].name.replace(".pdf", "") + "_EasyConvert.doc",
-          "application/msword",
-        );
-      } else if (activeTool === "pdf2excel") {
-        const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-        const loadingTask = pdfjsLib.getDocument({ data: arrayBuffer });
-        const pdf = await loadingTask.promise;
-        let csvContent = "";
-
-        for (let i = 1; i <= pdf.numPages; i++) {
-          const page = await pdf.getPage(i);
-          const textContent = await page.getTextContent();
-          let lastY = -1;
-          let rowText = "";
-          for (let item of textContent.items) {
-            if (lastY !== -1 && Math.abs(item.transform[5] - lastY) > 5) {
-              csvContent += rowText + "\n";
-              rowText = "";
-            }
-            rowText +=
-              (rowText === "" ? "" : ",") + `${item.str.replace(/"/g, '""')}`;
-            lastY = item.transform[5];
-          }
-          csvContent += rowText + "\n";
-        }
-        const bytes = new TextEncoder().encode("\uFEFF" + csvContent);
-        triggerLocalDownload(
-          bytes,
-          selectedFilesList[0].name.replace(".pdf", "") + "_EasyConvert.csv",
-          "text/csv;charset=utf-8;",
-        );
-      }
-      statusLabel.innerText = translations[currentLang].status_done;
+      await runTool(activeTool);
+      status.textContent = t("status_done");
     } catch (err) {
-      alert(translations[currentLang].status_error + err.message);
-      statusLabel.innerText = translations[currentLang].status_error_label;
+      alert(t("status_error") + err.message);
+      status.textContent = t("status_error_label");
+    } finally {
+      busy = false;
+      oneTimePass = false;
     }
   }
-  function triggerLocalDownload(bytes, filename, type) {
-    const blob = new Blob([bytes], { type: type });
-    triggerBlobDownload(blob, filename);
+
+  async function runTool(tool) {
+    const file = selectedFiles[0];
+    switch (tool) {
+      case "img2pdf": return imagesToPdf();
+      case "pdf2img": return pdfToImages(file);
+      case "merge": return mergePdfs();
+      case "split": return splitPdf(file);
+      case "compress": return compressPdf(file);
+      case "pdf2word": return pdfToWord(file);
+      case "pdf2excel": return pdfToExcel(file);
+    }
   }
-  function triggerBlobDownload(blob, filename) {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(link.href);
+
+  async function toJpegBytes(file) {
+    const bmp = await createImageBitmap(file);
+    const canvas = document.createElement("canvas");
+    canvas.width = bmp.width;
+    canvas.height = bmp.height;
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#fff";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(bmp, 0, 0);
+    const blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.92));
+    return blob.arrayBuffer();
   }
-  function openGateModal() {
-    document.getElementById("gate-modal").style.display = "flex";
+
+  async function imagesToPdf() {
+    const pdfDoc = await PDFLib.PDFDocument.create();
+    for (const file of selectedFiles) {
+      let img;
+      if (file.type === "image/png") img = await pdfDoc.embedPng(await file.arrayBuffer());
+      else if (file.type === "image/jpeg") img = await pdfDoc.embedJpg(await file.arrayBuffer());
+      else img = await pdfDoc.embedJpg(await toJpegBytes(file)); // webp, gif, bmp ฯลฯ
+      const page = pdfDoc.addPage([img.width, img.height]);
+      page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
+    }
+    download(await pdfDoc.save(), "EasyConvert_Images.pdf", "application/pdf");
   }
-  function closeGateModal() {
-    document.getElementById("gate-modal").style.display = "none";
+
+  async function loadPdfJs(file) {
+    return pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
   }
+
+  async function pdfToImages(file) {
+    const pdf = await loadPdfJs(file);
+    const blobs = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      const viewport = page.getViewport({ scale: 1.5 });
+      const canvas = document.createElement("canvas");
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvasContext: canvas.getContext("2d"), viewport }).promise;
+      blobs.push(await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.92)));
+    }
+    if (blobs.length === 1) {
+      download(blobs[0], "EasyConvert_Page_1.jpg");
+      return;
+    }
+    const zip = new JSZip();
+    blobs.forEach((b, i) => zip.file(`Page_${i + 1}.jpg`, b));
+    download(await zip.generateAsync({ type: "blob" }), "EasyConvert_Pages.zip");
+  }
+
+  async function mergePdfs() {
+    const merged = await PDFLib.PDFDocument.create();
+    for (const file of selectedFiles) {
+      const src = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+      const pages = await merged.copyPages(src, src.getPageIndices());
+      pages.forEach((p) => merged.addPage(p));
+    }
+    download(await merged.save(), "EasyConvert_Merged.pdf", "application/pdf");
+  }
+
+  function parseRanges(input, max) {
+    const out = [];
+    for (const part of input.split(",")) {
+      const s = part.trim();
+      if (!s) continue;
+      const m = s.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+      if (!m) throw new Error(t("invalid_range"));
+      const a = parseInt(m[1], 10);
+      const b = m[2] ? parseInt(m[2], 10) : a;
+      if (a < 1 || b < a || b > max) throw new Error(t("invalid_range"));
+      for (let i = a; i <= b; i++) out.push(i - 1);
+    }
+    if (out.length === 0) throw new Error(t("invalid_range"));
+    return out;
+  }
+
+  async function splitPdf(file) {
+    const src = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+    const indices = parseRanges($("page-range").value || "1", src.getPageCount());
+    const out = await PDFLib.PDFDocument.create();
+    const pages = await out.copyPages(src, indices);
+    pages.forEach((p) => out.addPage(p));
+    download(await out.save(), "EasyConvert_Split.pdf", "application/pdf");
+  }
+
+  // หมายเหตุ: pdf-lib บีบอัดได้เฉพาะโครงสร้างภายใน ผลลดขนาดขึ้นกับไฟล์ต้นฉบับ
+  async function compressPdf(file) {
+    const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+    const bytes = await doc.save({ useObjectStreams: true });
+    download(bytes, "Compressed_" + file.name, "application/pdf");
+  }
+
+  async function extractPageTexts(file) {
+    const pdf = await loadPdfJs(file);
+    const pages = [];
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i);
+      pages.push((await page.getTextContent()).items);
+    }
+    return pages;
+  }
+
+  const escapeHtml = (s) =>
+    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // ได้ไฟล์ .doc (HTML) ที่ Word เปิดได้ เป็นข้อความล้วน ไม่รักษา layout เดิม
+  async function pdfToWord(file) {
+    const pages = await extractPageTexts(file);
+    const body = pages
+      .map((items, idx) => {
+        const text = escapeHtml(items.map((it) => it.str).join(" "));
+        const brk = idx > 0 ? '<br clear="all" style="page-break-before:always">' : "";
+        return brk + "<p>" + text + "</p>";
+      })
+      .join("");
+    const html =
+      '<html xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"></head><body>' +
+      body + "</body></html>";
+    download(
+      new TextEncoder().encode("\uFEFF" + html),
+      file.name.replace(/\.pdf$/i, "") + "_EasyConvert.doc",
+      "application/msword"
+    );
+  }
+
+  // ได้ไฟล์ CSV จัดแถวตามตำแหน่งแนวตั้งของข้อความ (เหมาะกับ PDF ที่เป็นตาราง)
+  async function pdfToExcel(file) {
+    const pages = await extractPageTexts(file);
+    const quote = (s) => '"' + s.replace(/"/g, '""') + '"';
+    const lines = [];
+    for (const items of pages) {
+      const rows = new Map();
+      for (const it of items) {
+        if (!it.str.trim()) continue;
+        const y = Math.round(it.transform[5] / 4);
+        if (!rows.has(y)) rows.set(y, []);
+        rows.get(y).push({ x: it.transform[4], s: it.str });
+      }
+      [...rows.entries()]
+        .sort((a, b) => b[0] - a[0])
+        .forEach(([, cells]) => {
+          cells.sort((a, b) => a.x - b.x);
+          lines.push(cells.map((c) => quote(c.s)).join(","));
+        });
+    }
+    download(
+      new TextEncoder().encode("\uFEFF" + lines.join("\r\n")),
+      file.name.replace(/\.pdf$/i, "") + "_EasyConvert.csv",
+      "text/csv;charset=utf-8"
+    );
+  }
+
+  function download(data, filename, type) {
+    const blob = data instanceof Blob ? data : new Blob([data], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  /* ---------- Modal / rewarded ad ---------- */
+
+  function openGateModal() { $("gate-modal").style.display = "flex"; }
+  function closeGateModal() { $("gate-modal").style.display = "none"; }
+
   function startRewardedAd() {
-    const btn = document.getElementById("watch-ad-btn");
+    const btn = $("watch-ad-btn");
+    if (btn.disabled) return;
     let timeLeft = 15;
     btn.disabled = true;
-    const counter = setInterval(() => {
-      btn.innerText = translations[currentLang].ad_countdown.replace(
-        "{time}",
-        timeLeft,
-      );
+    btn.textContent = t("ad_countdown").replace("{time}", timeLeft);
+    const timer = setInterval(() => {
       timeLeft--;
-      if (timeLeft < 0) {
-        clearInterval(counter);
-        btn.disabled = false;
-        btn.innerText = translations[currentLang].btn_watch;
-        closeGateModal();
-        alert(translations[currentLang].alert_ad_done);
-        isPremiumUser = true;
-        executeFileProcessing().then(() => {
-          isPremiumUser = false;
-          verifySecurePremiumToken();
-        });
+      if (timeLeft > 0) {
+        btn.textContent = t("ad_countdown").replace("{time}", timeLeft);
+        return;
       }
+      clearInterval(timer);
+      btn.disabled = false;
+      btn.textContent = t("btn_watch");
+      closeGateModal();
+      alert(t("alert_ad_done"));
+      oneTimePass = true;
+      executeFileProcessing();
     }, 1000);
   }
-  // 🔄 ระบบชำระเงินจำลองพรีเมียมรองรับแยกภูมิภาคสากล
-  function simulatePayment() {
-    if (userCountryCode === "TH") {
-      const email = prompt(translations[currentLang].prompt_email);
-      if (email) {
-        const generateHash = btoa(email + "" + CRYPTO_SECRET);
-        localStorage.setItem("ec_premium_user", email);
-        localStorage.setItem("ec_premium_hash", generateHash);
-        alert(translations[currentLang].alert_pay_done);
-        closeGateModal();
-        window.location.reload();
-      }
-    } else {
-      alert(
-        "Redirecting to secure Global Stripe Payment Gateway ($1.99 USD)...",
-      );
-      const mockEmail = "inter_user@example.com";
-      const generateHash = btoa(mockEmail + "" + CRYPTO_SECRET);
-      localStorage.setItem("ec_premium_user", mockEmail);
-      localStorage.setItem("ec_premium_hash", generateHash);
-      closeGateModal();
-      window.location.reload();
-    }
-  }
-  // ดักฟังและเชื่อมโยง Event Listener มั่นคงหลัง DOM พร้อมทำงาน ป้องกันหน้าเว็บนิ่งค้าง
+
+  /* ---------- Init ---------- */
+
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".tab-btn").forEach((button) => {
       button.addEventListener("click", function () {
         activeTool = this.getAttribute("data-tool");
-        document
-          .querySelectorAll(".tab-btn")
-          .forEach((btn) => btn.classList.remove("active"));
+        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
         this.classList.add("active");
-        document.getElementById("split-options").style.display =
-          activeTool === "split" ? "block" : "none";
-        const currentTabName = this.innerText;
-        document.getElementById("file-status").innerText =
-          translations[currentLang].switch_text + currentTabName;
+        selectedFiles = [];
+        $("file-input").value = "";
+        applyToolUI();
+        $("file-status").textContent = t("switch_text") + this.textContent;
       });
     });
-    document
-      .getElementById("lang-toggle")
-      .addEventListener("change", function () {
-        changeLanguage(this.value);
-      });
-    document
-      .getElementById("user-badge")
-      .addEventListener("click", openGateModal);
-    document
-      .getElementById("close-modal-btn")
-      .addEventListener("click", closeGateModal);
-    document
-      .getElementById("pay-btn")
-      .addEventListener("click", simulatePayment);
-    document
-      .getElementById("watch-ad-btn")
-      .addEventListener("click", startRewardedAd);
-    document
-      .getElementById("file-input")
-      .addEventListener("change", function (e) {
-        if (e.target.files.length > 0) {
-          selectedFilesList = e.target.files;
-          document.getElementById("file-status").innerText = translations[
-            currentLang
-          ].file_ready_text.replace("{count}", e.target.files.length);
-        }
-      });
-    document
-      .getElementById("process-btn")
-      .addEventListener("click", executeFileProcessing);
-    const dropZone = document.getElementById("drop-area");
-    if (dropZone) {
-      dropZone.addEventListener("dragover", (e) => {
-        e.preventDefault();
-      });
-      dropZone.addEventListener("drop", (e) => {
-        e.preventDefault();
-        if (e.dataTransfer.files.length > 0) {
-          selectedFilesList = e.dataTransfer.files;
-          document.getElementById("file-status").innerText = translations[
-            currentLang
-          ].file_ready_text.replace("{count}", selectedFilesList.length);
-        }
-      });
-    }
-    // เริ่มต้นลำดับทำงานเมื่อเปิดหน้าจอ
-    changeLanguage("th");
-    initAntiCheat();
-    checkPurchasingPower();
+
+    $("lang-toggle").addEventListener("change", (e) => changeLanguage(e.target.value));
+    $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal(); });
+    $("close-modal-btn").addEventListener("click", closeGateModal);
+    $("pay-btn").addEventListener("click", startCheckout);
+    $("watch-ad-btn").addEventListener("click", startRewardedAd);
+    $("process-btn").addEventListener("click", executeFileProcessing);
+
+    const input = $("file-input");
+    input.addEventListener("change", (e) => {
+      setFiles(e.target.files);
+      input.value = "";
+    });
+
+    const drop = $("drop-area");
+    drop.addEventListener("click", () => input.click());
+    drop.addEventListener("dragover", (e) => e.preventDefault());
+    drop.addEventListener("drop", (e) => {
+      e.preventDefault();
+      setFiles(e.dataTransfer.files);
+    });
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+    applyToolUI();
+    changeLanguage(currentLang);
+    detectCountry();
+    verifyPremium().then(claimPaidSession);
   });
 })();
