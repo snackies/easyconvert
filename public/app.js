@@ -1,10 +1,10 @@
 (function () {
   "use strict";
-
+ 
   const FREE_LIMIT_MB = 15;
   const IMAGE_TOOLS = ["img2pdf"];
   const MULTI_TOOLS = ["img2pdf", "merge"];
-
+ 
   let currentLang = localStorage.getItem("ec_lang") || "th";
   let isPremiumUser = false;
   let oneTimePass = false; // สิทธิ์ใช้ฟรี 1 ครั้งจากการดูโฆษณา
@@ -12,18 +12,18 @@
   let selectedFiles = [];
   let userCountry = "TH";
   let busy = false;
-
+ 
   const $ = (id) => document.getElementById(id);
   const t = (key) => (translations[currentLang] && translations[currentLang][key]) || key;
-
+ 
   /* ---------- i18n / UI ---------- */
-
+ 
   function changeLanguage(lang) {
     currentLang = lang;
     localStorage.setItem("ec_lang", lang);
     document.documentElement.lang = lang;
     $("lang-toggle").value = lang;
-
+ 
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       const text = translations[lang][key];
@@ -31,12 +31,12 @@
       if (key === "drop_instruction") el.innerHTML = text;
       else el.textContent = text;
     });
-
+ 
     renderBadge();
     updatePricingDisplay();
     updateStatus();
   }
-
+ 
   function renderBadge() {
     const badge = $("user-badge");
     if (isPremiumUser) {
@@ -48,74 +48,81 @@
     }
     $("ad-top").style.display = isPremiumUser ? "none" : "block";
   }
-
+ 
   function updatePricingDisplay() {
-    const th = userCountry === "TH";
-    const el = $("price-text");
-    if (th) {
-      el.textContent = currentLang === "th"
-        ? "👑 พรีเมียม 30 วัน: เพียง 29 บาท"
-        : "👑 Premium 30 days: Only 29 THB";
-    } else {
-      el.textContent = currentLang === "th"
-        ? "👑 พรีเมียม 30 วัน: เพียง $1.99 USD"
-        : "👑 Premium 30 days: Only $1.99 USD";
-    }
+    $("price-text").textContent = currentLang === "th"
+      ? "👑 พรีเมียม 30 วัน: เพียง 29 บาท (ชำระผ่าน PromptPay)"
+      : "👑 Premium 30 days: Only 29 THB (pay via PromptPay)";
   }
-
+ 
   function updateStatus() {
     $("file-status").textContent = selectedFiles.length === 0
       ? t("no_file")
       : t("file_ready_text").replace("{count}", selectedFiles.length);
   }
-
+ 
   /* ---------- Premium (ตรวจสอบฝั่งเซิร์ฟเวอร์) ---------- */
-
+ 
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
-    return { ok: res.ok, data: await res.json().catch(() => ({})) };
+    return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
   }
-
+ 
   async function verifyPremium() {
     const token = localStorage.getItem("ec_token");
     isPremiumUser = false;
     if (token) {
       try {
-        const { data } = await postJSON("/api/verify", { token });
-        isPremiumUser = !!data.premium;
-        if (!data.premium) localStorage.removeItem("ec_token");
+        const { ok, data } = await postJSON("/api/verify", { token });
+        if (ok) {
+          isPremiumUser = !!data.premium;
+          if (!data.premium) localStorage.removeItem("ec_token");
+        }
+        // ถ้าเซิร์ฟเวอร์ error (เช่น ตั้งค่า env ไม่ครบ) จะไม่ลบ token ทิ้ง
       } catch (e) {
-        /* ออฟไลน์/API ล่ม: ถือว่ายังไม่ใช่พรีเมียม */
+        /* ออฟไลน์: ถือว่ายังไม่ใช่พรีเมียมชั่วคราว */
       }
     }
     renderBadge();
   }
-
+ 
   async function claimPaidSession() {
     const params = new URLSearchParams(location.search);
-    const sid = params.get("session_id");
+    const urlSid = params.get("session_id");
+    if (urlSid) {
+      try { localStorage.setItem("ec_pending_session", urlSid); } catch (e) {}
+      history.replaceState(null, "", location.pathname);
+    }
+    let sid = null;
+    try { sid = localStorage.getItem("ec_pending_session"); } catch (e) {}
     if (!sid) return;
-    history.replaceState(null, "", location.pathname);
+    if (isPremiumUser) {
+      localStorage.removeItem("ec_pending_session");
+      return;
+    }
+ 
     $("file-status").textContent = t("pay_verifying");
     try {
-      const { ok, data } = await postJSON("/api/claim", { session_id: sid });
+      const { ok, status, data } = await postJSON("/api/claim", { session_id: sid });
       if (ok && data.token) {
         localStorage.setItem("ec_token", data.token);
+        localStorage.removeItem("ec_pending_session");
         await verifyPremium();
         alert(t("alert_pay_done"));
       } else {
-        alert(t("alert_pay_unverified"));
+        if (status === 400 || status === 410) localStorage.removeItem("ec_pending_session");
+        alert(t("alert_pay_unverified") + " [" + status + ": " + (data.error || "error") + "]");
       }
     } catch (e) {
-      alert(t("alert_pay_unverified"));
+      alert(t("alert_pay_unverified") + " [network]");
     }
     updateStatus();
   }
-
+ 
   async function startCheckout() {
     const btn = $("pay-btn");
     btn.disabled = true;
@@ -132,7 +139,7 @@
     }
     btn.disabled = false;
   }
-
+ 
   async function detectCountry() {
     try {
       const res = await fetch("/api/geo");
@@ -141,18 +148,18 @@
     } catch (e) {}
     updatePricingDisplay();
   }
-
+ 
   /* ---------- File selection ---------- */
-
+ 
   function acceptFor(tool) {
     return IMAGE_TOOLS.includes(tool) ? "image/*" : "application/pdf,.pdf";
   }
-
+ 
   function isValidFile(file, tool) {
     if (IMAGE_TOOLS.includes(tool)) return file.type.startsWith("image/");
     return file.type === "application/pdf" || /\.pdf$/i.test(file.name);
   }
-
+ 
   function setFiles(fileList) {
     const files = Array.from(fileList);
     if (files.length === 0) return;
@@ -162,21 +169,21 @@
     selectedFiles = MULTI_TOOLS.includes(activeTool) ? valid : [valid[0]];
     updateStatus();
   }
-
+ 
   function applyToolUI() {
     const input = $("file-input");
     input.accept = acceptFor(activeTool);
     input.multiple = MULTI_TOOLS.includes(activeTool);
     $("split-options").style.display = activeTool === "split" ? "block" : "none";
   }
-
+ 
   /* ---------- Processing ---------- */
-
+ 
   function needsGate(totalMB) {
     if (isPremiumUser || oneTimePass) return false;
     return totalMB > FREE_LIMIT_MB || activeTool !== "img2pdf";
   }
-
+ 
   async function executeFileProcessing() {
     if (busy) return;
     if (selectedFiles.length === 0) {
@@ -188,7 +195,7 @@
       openGateModal();
       return;
     }
-
+ 
     busy = true;
     const status = $("file-status");
     status.textContent = t("status_processing");
@@ -203,7 +210,7 @@
       oneTimePass = false;
     }
   }
-
+ 
   async function runTool(tool) {
     const file = selectedFiles[0];
     switch (tool) {
@@ -216,7 +223,7 @@
       case "pdf2excel": return pdfToExcel(file);
     }
   }
-
+ 
   async function toJpegBytes(file) {
     const bmp = await createImageBitmap(file);
     const canvas = document.createElement("canvas");
@@ -229,7 +236,7 @@
     const blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", 0.92));
     return blob.arrayBuffer();
   }
-
+ 
   async function imagesToPdf() {
     const pdfDoc = await PDFLib.PDFDocument.create();
     for (const file of selectedFiles) {
@@ -242,11 +249,11 @@
     }
     download(await pdfDoc.save(), "EasyConvert_Images.pdf", "application/pdf");
   }
-
+ 
   async function loadPdfJs(file) {
     return pdfjsLib.getDocument({ data: await file.arrayBuffer() }).promise;
   }
-
+ 
   async function pdfToImages(file) {
     const pdf = await loadPdfJs(file);
     const blobs = [];
@@ -267,7 +274,7 @@
     blobs.forEach((b, i) => zip.file(`Page_${i + 1}.jpg`, b));
     download(await zip.generateAsync({ type: "blob" }), "EasyConvert_Pages.zip");
   }
-
+ 
   async function mergePdfs() {
     const merged = await PDFLib.PDFDocument.create();
     for (const file of selectedFiles) {
@@ -277,7 +284,7 @@
     }
     download(await merged.save(), "EasyConvert_Merged.pdf", "application/pdf");
   }
-
+ 
   function parseRanges(input, max) {
     const out = [];
     for (const part of input.split(",")) {
@@ -293,7 +300,7 @@
     if (out.length === 0) throw new Error(t("invalid_range"));
     return out;
   }
-
+ 
   async function splitPdf(file) {
     const src = await PDFLib.PDFDocument.load(await file.arrayBuffer());
     const indices = parseRanges($("page-range").value || "1", src.getPageCount());
@@ -302,14 +309,14 @@
     pages.forEach((p) => out.addPage(p));
     download(await out.save(), "EasyConvert_Split.pdf", "application/pdf");
   }
-
+ 
   // หมายเหตุ: pdf-lib บีบอัดได้เฉพาะโครงสร้างภายใน ผลลดขนาดขึ้นกับไฟล์ต้นฉบับ
   async function compressPdf(file) {
     const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
     const bytes = await doc.save({ useObjectStreams: true });
     download(bytes, "Compressed_" + file.name, "application/pdf");
   }
-
+ 
   async function extractPageTexts(file) {
     const pdf = await loadPdfJs(file);
     const pages = [];
@@ -319,10 +326,10 @@
     }
     return pages;
   }
-
+ 
   const escapeHtml = (s) =>
     s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
+ 
   // ได้ไฟล์ .doc (HTML) ที่ Word เปิดได้ เป็นข้อความล้วน ไม่รักษา layout เดิม
   async function pdfToWord(file) {
     const pages = await extractPageTexts(file);
@@ -342,7 +349,7 @@
       "application/msword"
     );
   }
-
+ 
   // ได้ไฟล์ CSV จัดแถวตามตำแหน่งแนวตั้งของข้อความ (เหมาะกับ PDF ที่เป็นตาราง)
   async function pdfToExcel(file) {
     const pages = await extractPageTexts(file);
@@ -369,7 +376,7 @@
       "text/csv;charset=utf-8"
     );
   }
-
+ 
   function download(data, filename, type) {
     const blob = data instanceof Blob ? data : new Blob([data], { type });
     const url = URL.createObjectURL(blob);
@@ -381,12 +388,12 @@
     document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-
+ 
   /* ---------- Modal / rewarded ad ---------- */
-
+ 
   function openGateModal() { $("gate-modal").style.display = "flex"; }
   function closeGateModal() { $("gate-modal").style.display = "none"; }
-
+ 
   function startRewardedAd() {
     const btn = $("watch-ad-btn");
     if (btn.disabled) return;
@@ -408,9 +415,9 @@
       executeFileProcessing();
     }, 1000);
   }
-
+ 
   /* ---------- Init ---------- */
-
+ 
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".tab-btn").forEach((button) => {
       button.addEventListener("click", function () {
@@ -423,20 +430,20 @@
         $("file-status").textContent = t("switch_text") + this.textContent;
       });
     });
-
+ 
     $("lang-toggle").addEventListener("change", (e) => changeLanguage(e.target.value));
     $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal(); });
     $("close-modal-btn").addEventListener("click", closeGateModal);
     $("pay-btn").addEventListener("click", startCheckout);
     $("watch-ad-btn").addEventListener("click", startRewardedAd);
     $("process-btn").addEventListener("click", executeFileProcessing);
-
+ 
     const input = $("file-input");
     input.addEventListener("change", (e) => {
       setFiles(e.target.files);
       input.value = "";
     });
-
+ 
     const drop = $("drop-area");
     drop.addEventListener("click", () => input.click());
     drop.addEventListener("dragover", (e) => e.preventDefault());
@@ -444,10 +451,10 @@
       e.preventDefault();
       setFiles(e.dataTransfer.files);
     });
-
+ 
     pdfjsLib.GlobalWorkerOptions.workerSrc =
       "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-
+ 
     applyToolUI();
     changeLanguage(currentLang);
     detectCountry();

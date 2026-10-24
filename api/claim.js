@@ -32,6 +32,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({ token, exp });
   } catch (e) {
     console.error("claim failed:", e.message);
-    return res.status(502).json({ error: "verify_failed" });
+    const code = /TOKEN_SECRET/.test(e.message) ? "token_secret_missing" : "verify_failed";
+    return res.status(502).json({ error: code });
   }
 };

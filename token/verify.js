@@ -9,6 +9,6 @@ module.exports = (req, res) => {
     return res.status(200).json(payload ? { premium: true, exp: payload.exp } : { premium: false });
   } catch (e) {
     console.error("verify failed:", e.message);
-    return res.status(200).json({ premium: false });
+    return res.status(500).json({ premium: false, error: "server_error" });
   }
 };
