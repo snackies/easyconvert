@@ -4,11 +4,20 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EasyConvert - All-in-One Secure Document Utility</title>
-    <!-- External Libraries -->
-    <script src="https://unpkg.com"></script>
-    <script src="https://cloudflare.com"></script>
+    
+    <!-- 💰 วางโค้ด Google AdSense ยืนยันสิทธิ์ของคุณตรงนี้ -->
+    <script async src="https://googlesyndication.com" crossorigin="anonymous"></script>
+    
+    <!-- 📥 บังคับโหลดไลบรารีประมวลผล PDF ให้เสร็จก่อนรันระบบหลัก -->
+    <script src="https://unpkg.com" defer></script>
+    <script src="https://cloudflare.com" defer></script>
+    
     <!-- เชื่อมต่อไฟล์ดีไซน์ภายนอก -->
     <link rel="stylesheet" href="styles.css">
+    
+    <!-- 🔄 บังคับโหลดคลังคำแปลให้สำเร็จก่อนที่แอปพลิเคชันจะอ่านค่า (ใช้คำสั่ง defer) -->
+    <script src="translations.js" defer></script>
+    <script src="app.js" defer></script>
 </head>
 <body>
 
@@ -77,8 +86,5 @@
     </div>
 </div>
 
-<!-- เชื่อมต่อคลังคำและระบบคณิตศาสตร์หลังบ้าน -->
-<script src="translations.js"></script>
-<script src="app.js"></script>
 </body>
 </html>
