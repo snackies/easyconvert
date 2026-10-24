@@ -1,437 +1,514 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyConvert - All-in-One Secure Document Utility</title>
-    <!-- โหลดไลบรารีประมวลผล PDF มาตรฐานสากลผ่าน CDN ความเร็วสูง -->
-    <script src="https://unpkg.com"></script>
-    <script src="https://cloudflare.com"></script>
-    
-    <style>
-        :root {
-            --primary: #007bff;
-            --primary-hover: #0056b3;
-            --success: #28a745;
-            --bg-glass: rgba(255, 255, 255, 0.85);
-            --border-glass: rgba(255, 255, 255, 0.3);
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #e0eafc, #cfdef3);
-            margin: 0; padding: 20px; min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            box-sizing: border-box;
-        }
-        .app-card {
-            background: var(--bg-glass);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border-glass);
-            padding: 30px; border-radius: 16px;
-            max-width: 650px; width: 100%; text-align: center;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.06);
-            box-sizing: border-box;
-        }
-        .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
-        .logo { font-size: 24px; font-weight: bold; color: #333; }
-        
-        .right-header { display: flex; align-items: center; gap: 10px; }
-        .lang-select { background: white; border: 1px solid #ccc; padding: 6px 10px; border-radius: 6px; font-size: 13px; cursor: pointer; font-weight: bold; }
-        
-        .badge { background: #6c757d; color: white; padding: 4px 10px; font-size: 12px; border-radius: 20px; font-weight: bold; white-space: nowrap; cursor: pointer; }
-        .badge.premium { background: linear-gradient(45deg, #ffc107, #ff9800); color: #333; }
-        
-        .nav-tabs { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; background: rgba(0,0,0,0.04); padding: 6px; border-radius: 10px; flex-wrap: wrap; }
-        .tab-btn { background: none; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 13px; color: #555; transition: 0.2s; white-space: nowrap; }
-        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        
-        .drop-zone { border: 2px dashed var(--primary); padding: 45px 20px; border-radius: 12px; background: rgba(240, 248, 255, 0.4); cursor: pointer; transition: 0.3s; position: relative; margin-top: 10px; }
-        .drop-zone:hover { background: rgba(225, 240, 255, 0.7); transform: scale(1.01); }
-        
-        .dynamic-options { display: none; margin-top: 15px; padding: 15px; background: rgba(255,255,255,0.5); border-radius: 8px; border: 1px solid rgba(0,0,0,0.05); text-align: left; }
-        .input-group { display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: #333; }
-        .input-group input { padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
-
-        .ad-placeholder { background: rgba(0,0,0,0.03); padding: 12px; margin: 15px 0; border-radius: 8px; font-size: 12px; color: #666; }
-        .btn-main { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; font-size: 16px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: 0.2s; box-shadow: 0 4px 12px rgba(0,123,255,0.15); }
-        .btn-main:hover { background: var(--primary-hover); }
-        .privacy-seal { font-size: 12px; color: var(--success); margin-top: 15px; font-weight: 500; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; padding: 30px; border-radius: 16px; max-width: 400px; width: 90%; text-align: center; }
-        .btn-pay { background: var(--success); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
-        .btn-watch { background: #ff9800; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; }
-        .close-btn { margin-top: 15px; background: #eee; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'unsafe-inline' https://unpkg.com; style-src 'unsafe-inline'; img-src 'self' blob: data:; connect-src https://unpkg.com https://ipapi.co; worker-src blob:; frame-src 'none'; object-src 'none'; base-uri 'none'">
+<title>EasyConvert - All-in-One Secure Document Utility</title>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js" crossorigin="anonymous"></script>
+<style>
+:root{--primary:#007bff;--primary-hover:#0056b3;--success:#28a745;--bg-glass:rgba(255,255,255,.85);--border-glass:rgba(255,255,255,.3)}
+*{box-sizing:border-box}
+body{font-family:'Segoe UI','Sarabun',Tahoma,Geneva,Verdana,sans-serif;background:linear-gradient(135deg,#e0eafc,#cfdef3);margin:0;padding:20px;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.app-card{background:var(--bg-glass);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--border-glass);padding:30px;border-radius:16px;max-width:650px;width:100%;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,.06)}
+.header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;gap:10px;flex-wrap:wrap}
+.logo{font-size:24px;font-weight:bold;color:#333}
+.right-header{display:flex;align-items:center;gap:10px}
+.lang-select{background:#fff;border:1px solid #ccc;padding:6px 10px;border-radius:6px;font-size:13px;cursor:pointer;font-weight:bold}
+.badge{background:#6c757d;color:#fff;padding:4px 10px;font-size:12px;border-radius:20px;font-weight:bold;white-space:nowrap;cursor:pointer}
+.badge.premium{background:linear-gradient(45deg,#ffc107,#ff9800);color:#333}
+.nav-tabs{display:flex;gap:6px;justify-content:center;margin-bottom:20px;background:rgba(0,0,0,.04);padding:6px;border-radius:10px;flex-wrap:wrap}
+.tab-btn{background:none;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;color:#555;transition:.2s;white-space:nowrap}
+.tab-btn.active{background:#fff;color:var(--primary);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.drop-zone{border:2px dashed var(--primary);padding:45px 20px;border-radius:12px;background:rgba(240,248,255,.4);cursor:pointer;transition:.3s;margin-top:10px}
+.drop-zone:hover,.drop-zone.over{background:rgba(225,240,255,.7);transform:scale(1.01)}
+.dynamic-options{display:none;margin-top:15px;padding:15px;background:rgba(255,255,255,.5);border-radius:8px;border:1px solid rgba(0,0,0,.05);text-align:left;gap:12px}
+.dynamic-options.on{display:grid}
+.input-group{display:flex;flex-direction:column;gap:5px;font-size:13px;color:#333}
+.input-group input,.input-group select{padding:8px;border:1px solid #ccc;border-radius:6px;font-size:13px;font-family:inherit}
+.hint{font-size:12px;color:#666;min-height:1.2em}
+.ad-placeholder{background:rgba(0,0,0,.03);padding:12px;margin:15px 0;border-radius:8px;font-size:12px;color:#666}
+.btn-main{background:var(--primary);color:#fff;border:none;padding:14px;width:100%;font-size:16px;border-radius:8px;font-weight:bold;cursor:pointer;margin-top:15px;transition:.2s;box-shadow:0 4px 12px rgba(0,123,255,.15)}
+.btn-main:hover{background:var(--primary-hover)}.btn-main:disabled{opacity:.55;cursor:not-allowed}
+.privacy-seal{font-size:12px;color:var(--success);margin-top:15px;font-weight:500}
+#file-status{margin-top:15px;font-size:13px;font-weight:bold;color:#333;min-height:1.3em}
+#progress{display:none;height:8px;margin-top:10px;border-radius:99px;background:rgba(0,0,0,.08);overflow:hidden}
+#progress.on{display:block}#bar{height:100%;width:0;background:linear-gradient(90deg,#007bff,#6aa8ff);transition:width .3s}
+#file-list{display:none;margin-top:12px;text-align:left}#file-list.on{display:block}
+.fl-head{display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:#666;margin:0 4px 8px;flex-wrap:wrap}
+.fl-note{font-size:12px;color:#b4691f;margin:0 4px 8px}
+.fl-row{display:flex;align-items:center;gap:8px;background:#fff;padding:8px 10px;margin-bottom:6px;border-radius:8px;font-size:13px;border:1px solid rgba(0,0,0,.06)}
+.fl-i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:800;color:#fff;background:var(--primary);flex:none}
+.fl-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fl-s{color:#777;font-size:12px;flex:none}
+.fl-row button{border:0;background:#eef1f6;width:28px;height:28px;border-radius:6px;cursor:pointer;flex:none}
+.fl-row button:hover{background:#dbe6fb}.fl-row button:disabled{opacity:.35;cursor:default}
+#results{margin-top:12px;display:grid;gap:8px}
+.res{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#fff;padding:10px 14px;border-radius:8px;font-size:13px;text-align:left;border:1px solid rgba(0,0,0,.06)}
+.res span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+.res button{background:var(--primary);color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font-weight:bold}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal.on{display:flex}
+.modal-content{background:#fff;padding:30px;border-radius:16px;max-width:400px;width:100%;text-align:center}
+.btn-pay,.btn-watch{color:#fff;border:none;padding:10px;border-radius:6px;font-weight:bold;cursor:pointer;width:100%;margin-top:10px}
+.btn-pay{background:var(--success)}.btn-watch{background:#ff9800}.btn-watch:disabled{opacity:.7;cursor:wait}
+.close-btn{margin-top:15px;background:#eee;border:none;padding:6px 12px;border-radius:4px;cursor:pointer;font-size:12px}
+#freeze{position:fixed;inset:0;z-index:2000;display:none;place-items:center;text-align:center;padding:20px;background:rgba(10,20,40,.85);color:#fff;font-weight:bold}
+#freeze.on{display:grid}
+</style>
 </head>
 <body>
 
 <div class="app-card">
-    <div class="header-bar">
-        <div class="logo">🌐 EasyConvert</div>
-        <div class="right-header">
-            <select id="lang-toggle" class="lang-select">
-                <option value="th">🇹🇭 TH</option>
-                <option value="en">🇺🇸 EN</option>
-            </select>
-            <div id="user-badge" class="badge">สายฟรี (Free Tier)</div>
-        </div>
+  <div class="header-bar">
+    <div class="logo">🌐 EasyConvert</div>
+    <div class="right-header">
+      <select id="lang-toggle" class="lang-select" aria-label="Language">
+        <option value="th">🇹🇭 TH</option>
+        <option value="en">🇺🇸 EN</option>
+      </select>
+      <div id="user-badge" class="badge" role="button" tabindex="0"></div>
     </div>
+  </div>
 
-    <div class="nav-tabs">
-        <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf">📷 Image to PDF</button>
-        <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img">📄 PDF to Image</button>
-        <button id="tab-merge" class="tab-btn" data-tool="merge">🧩 Merge PDF</button>
-        <button id="tab-split" class="tab-btn" data-tool="split">✂️ Split PDF</button>
-        <button id="tab-compress" class="tab-btn" data-tool="compress">🗜️ PDF Compressor</button>
-    </div>
-    
-    <div id="ad-top" class="ad-placeholder" data-i18n="ad_text">📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]</div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" data-tool="img2pdf">📷 Image to PDF</button>
+    <button class="tab-btn" data-tool="pdf2img">📄 PDF to Image</button>
+    <button class="tab-btn" data-tool="merge">🧩 Merge PDF</button>
+    <button class="tab-btn" data-tool="split">✂️ Split PDF</button>
+    <button class="tab-btn" data-tool="compress">🗜️ PDF Compressor</button>
+  </div>
 
-    <div class="drop-zone" id="drop-area">
-        <span style="font-size: 45px;">📥</span>
-        <p id="drop-text" data-i18n="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong></p>
-        <input type="file" id="file-input" style="display: none;" multiple>
-    </div>
-    
-    <div id="split-options" class="dynamic-options">
-        <div class="input-group">
-            <label id="label-split" for="page-range" data-i18n="split_label">🎯 ระบุช่วงหน้าเอกสารที่ต้องการแยก (เช่น 1-3, 5, 7-10):</label>
-            <input type="text" id="page-range" placeholder="1-2">
-        </div>
-    </div>
-    
-    <div id="file-status" style="margin-top: 15px; font-size: 13px; font-weight: bold; color: #333;" data-i18n="no_file">ยังไม่ได้เลือกไฟล์</div>
+  <div id="ad-top" class="ad-placeholder" data-i18n="ad_text"></div>
 
-    <button class="btn-main" id="process-btn" data-i18n="btn_process">🚀 เริ่มประมวลผลไฟล์ทันที</button>
-    
-    <div class="privacy-seal" data-i18n="privacy_seal">🔒 100% Secure Sandbox: ไฟล์ทั้งหมดประมวลผลใน RAM เครื่องคุณ ไม่มีการส่งออกภายนอก</div>
+  <div class="drop-zone" id="drop-area" tabindex="0" role="button">
+    <span style="font-size:45px">📥</span>
+    <p id="drop-text" data-i18n="drop_instruction"></p>
+    <input type="file" id="file-input" style="display:none" multiple accept="image/png,image/jpeg">
+  </div>
 
-    <div style="margin-top: 25px; font-size: 11px; color: #666; border-top: 1px dashed #ccc; padding-top: 10px;">
-        <span data-i18n="affiliate_text">💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: </span><a href="#" style="color: var(--primary); text-decoration: none; font-weight: bold;" data-i18n="affiliate_link">🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ</a>
+  <div id="file-list" aria-live="polite"></div>
+
+  <div id="split-options" class="dynamic-options">
+    <div class="input-group">
+      <label for="page-range" data-i18n="split_label"></label>
+      <input type="text" id="page-range" placeholder="1-3, 5, 7-10" autocomplete="off">
     </div>
+    <div class="input-group">
+      <label for="split-mode" data-i18n="split_mode_label"></label>
+      <select id="split-mode">
+        <option value="single" data-i18n="mode_single"></option>
+        <option value="each" data-i18n="mode_each"></option>
+        <option value="all" data-i18n="mode_all"></option>
+      </select>
+    </div>
+    <div class="hint" id="split-hint"></div>
+  </div>
+
+  <div id="file-status" role="status" aria-live="polite"></div>
+  <div id="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="bar"></div></div>
+  <button class="btn-main" id="process-btn" data-i18n="btn_process"></button>
+  <div id="results"></div>
+
+  <div class="privacy-seal" data-i18n="privacy_seal"></div>
+
+  <div style="margin-top:25px;font-size:11px;color:#666;border-top:1px dashed #ccc;padding-top:10px">
+    <span data-i18n="affiliate_text"></span><a href="#" rel="sponsored noopener" style="color:var(--primary);text-decoration:none;font-weight:bold" data-i18n="affiliate_link"></a>
+  </div>
 </div>
 
-<div class="modal" id="gate-modal">
-    <div class="modal-content">
-        <h3 data-i18n="modal_title">💎 ปลดล็อกฟีเจอร์พรีเมียม</h3>
-        <p data-i18n="modal_desc">ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร</p>
-        
-        <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafafa;">
-            <div style="font-weight: bold; color: #333;" id="price-text" data-i18n="loading_price">กำลังโหลดราคาภูมิภาค...</div>
-            <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro</button>
-        </div>
-
-        <div style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือเลือกสายฟรีแลกเวลา -</div>
-        <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง</button>
-        <br>
-        <button class="close-btn" id="close-modal-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
+<div class="modal" id="gate-modal" role="dialog" aria-modal="true">
+  <div class="modal-content">
+    <h3 data-i18n="modal_title"></h3>
+    <p data-i18n="modal_desc"></p>
+    <div style="border:1px solid #eee;padding:15px;border-radius:8px;margin-bottom:15px;background:#fafafa">
+      <div style="font-weight:bold;color:#333" id="price-text"></div>
+      <button class="btn-pay" id="pay-btn" data-i18n="btn_pay"></button>
     </div>
+    <div style="font-size:12px;color:#777" data-i18n="or_text"></div>
+    <button class="btn-watch" id="watch-ad-btn"></button>
+    <button class="close-btn" id="close-modal-btn" data-i18n="btn_close"></button>
+  </div>
 </div>
+
+<div id="freeze" role="alert"><div id="freeze-msg"></div></div>
 
 <script>
-(function() {
-    let currentLang = 'th';
-    let isPremiumUser = false;
-    let activeTool = 'img2pdf';
-    let selectedFilesList = [];
-    let userCountryCode = 'TH';
-    const CRYPTO_SECRET = "EASYCONVERT_SECRET_PASSPHRASE_2026";
-    
-    const R2_ENDPOINT = "https://cloudflarestorage.com";
+(function () {
+  'use strict';
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cloudflare.com';
+  const CFG = Object.freeze({
+    HARD_LIMIT: 150 * 1024 * 1024, AD_LIMIT: 15 * 1024 * 1024, AD_SECONDS: 15, MAX_PAGES: 150, JPEG_Q: 0.8,
+    KEY: 'ec_token', LANG_KEY: 'ec_lang',
+    SECRET: 'CHANGE_ME_DEMO_ONLY',   // visible in page source: demo only. Real Pro needs a server-issued token.
+    DEMO: true,                       // set false in production
+    WORKER: 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js',
+    ALLOWED: ['https://unpkg.com/']
+  });
 
-    const translations = {
-        th: {
-            free_tier: "สายฟรี (Free Tier)",
-            premium_tier: "👑 สมาชิกพรีเมียม (PRO)",
-            ad_text: "📢 [พื้นที่โฆษณา Google AdSense - ทำเงินอัตโนมัติ]",
-            drop_instruction: "ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong>",
-            split_label: "🎯 ระบุช่วงหน้าเอกสารที่ต้องการแยก (เช่น 1-3, 5, 7-10):",
-            no_file: "ยังไม่ได้เลือกไฟล์",
-            btn_process: "🚀 เริ่มประมวลผลไฟล์ทันที",
-            privacy_seal: "🔒 100% Secure Sandbox: ไฟล์ทั้งหมดประมวลผลใน RAM เครื่องคุณ ไม่มีการส่งออกภายนอก",
-            affiliate_text: "💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: ",
-            affiliate_link: "🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ",
-            modal_title: "💎 ปลดล็อกฟีเจอร์พรีเมียม",
-            modal_desc: "ไฟล์ของคุณมีขนาดใหญ่ (เกิน 15 MB) หรือเครื่องมือนี้จำกัดไว้เฉพาะสายโปร",
-            loading_price: "กำลังโหลดราคาภูมิภาค...",
-            btn_pay: "💳 สแกนพร้อมเพย์ / ตัดบัตร เปิดใช้งาน Pro",
-            or_text: "- หรือเลือกสายฟรีแลกเวลา -",
-            btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
-            btn_close: "ปิดหน้าต่าง",
-            alert_cheat: "🔒 Security Alert: พบความพยายามเจาะระบบหรือแก้ไขโค้ดหน้าบ้าน! ระบบจะล้างเซสชันทันทีเพื่อความปลอดภัย",
-            alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
-            status_processing: "⏳ ระบบกำลังคิดเลขประมวลผลไฟล์บนแรมเครื่องของคุณอย่างปลอดภัย...",
-            status_done: "🎉 เสร็จสมบูรณ์! ดาวน์โหลดไฟล์เรียบร้อยแล้ว",
-            status_error: "❌ เกิดข้อผิดพลาดในการคำนวณไฟล์: ",
-            status_error_label: "❌ เกิดข้อผิดพลาด",
-            alert_ad_done: "🎉 ขอบคุณที่สนับสนุน! ระบบเปิดสิทธิ์ประมวลผลไฟล์ใหญ่ให้คุณเรียบร้อยแล้ว",
-            prompt_email: "กรุณากรอกอีเมลเพื่อเปิดใช้งานพรีเมียม:",
-            alert_pay_done: "🎉 ปลดล็อกโหมดโปรพรีเมียมถาวรเรียบร้อยแล้ว!",
-            switch_text: "สลับมาใช้งาน: ",
-            file_ready_text: "📷 เตรียมพร้อมประมวลผลจำนวน: {count} ไฟล์",
-            ad_countdown: "⏳ กำลังรับชมโฆษณา... ({time} วินาที)"
-            },
-            en: {
-            free_tier: "Free Tier",
-            premium_tier: "👑 Premium Member (PRO)",
-            ad_text: "📢 [Google AdSense Advertising Slot - Automated Revenue]",
-            drop_instruction: "Drag & drop files here or click to browse",
-            split_label: "🎯 Specify page ranges to split (e.g. 1-3, 5, 7-10):",
-            no_file: "No file selected",
-            btn_process: "🚀 Process File Now",
-            privacy_seal: "🔒 100% Secure Sandbox: All files are processed locally in RAM. No server uploads.",
-            affiliate_text: "💡 Productivity Setup Gear: ",
-            affiliate_link: "🛒 Check Recommended Ergonomic Office Cushion",
-            modal_title: "💎 Unlock Premium Features",
-            modal_desc: "Your file is large (over 15 MB) or this specific utility is a PRO feature.",
-            loading_price: "Loading regional pricing...",
-            btn_pay: "💳 Secure Checkout / Activate Pro",
-            or_text: "- Or stay free and support us -",
-            btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
-            btn_close: "Close Window",
-            alert_cheat: "🔒 Security Alert: Developer tools or client-side tampering detected. Session wiped for safety.",
-            alert_select_file: "Please select a file first!",
-            status_processing: "⏳ Processing assets safely inside your local browser memory sandbox...",
-            status_done: "🎉 Success! Output document downloaded seamlessly.",
-            status_error: "❌ Error processing files locally: ",
-            status_error_label: "❌ Processing Error",
-            alert_ad_done: "🎉 Thank you for the support! Large file capability unlocked for this session.",
-            prompt_email: "Enter your email address to link premium pass activation:",
-            alert_pay_done: "🎉 Lifetime Premium Pro Mode unlocked successfully!",
-            switch_text: "Switched to tool: ",
-            file_ready_text: "📷 Ready to convert: {count} file(s)",
-            ad_countdown: "⏳ Watching Ad... ({time}s)"
-            }
-};
-function changeLanguage(lang) {
-currentLang = lang;
-document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-        if (translations[lang][key]) {
-            if (key === "drop_instruction") {
-                el.innerHTML = translations[lang][key];
-            } else {
-                el.innerText = translations[lang][key];
-            }
-        }
-});
-updatePricingDisplay();
-verifySecurePremiumToken();
-if (selectedFilesList.length === 0) {
-document.getElementById('file-status').innerText = translations[currentLang].no_file;
-} else {
-document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", selectedFilesList.length);
-}
-}
-function initAntiCheat() {
-let devtoolsOpen = false;
-const threshold = 160;
-setInterval(() => {
-if ((window.outerWidth - window.innerWidth > threshold) || (window.outerHeight - window.innerHeight > threshold)) {
-if (!devtoolsOpen) {
-devtoolsOpen = true;
-alert(translations[currentLang].alert_cheat);
-localStorage.clear();
-window.location.reload();
-}
-} else { devtoolsOpen = false; }
-}, 1000);
-}
-async function checkPurchasingPower() {
-try {
-const res = await fetch('ipapi.co');
-const data = await res.json();
-userCountryCode = data.country_code || 'TH';
-} catch (e) {}
-updatePricingDisplay();
-}
-function updatePricingDisplay() {
-const priceElement = document.getElementById('price-text');
-if (userCountryCode === 'TH') {
-priceElement.innerText = (currentLang === 'th') ? "👑 สมัครสมาชิกรายเดือน: เพียง 29 บาท" : "👑 Premium Monthly: Only 29 THB";
-} else {
-priceElement.innerText = (currentLang === 'th') ? "👑 สมาชิกพรีเมียมสากล: เพียง $1.99 USD" : "👑 Global Premium Pass: Only $1.99 USD";
-}
-}
-function verifySecurePremiumToken() {
-const savedToken = localStorage.getItem('ec_premium_hash');
-const tokenSource = localStorage.getItem('ec_premium_user');
-const badge = document.getElementById('user-badge');
-if (savedToken && tokenSource) {
-const expectedHash = btoa(tokenSource + "_" + CRYPTO_SECRET);
-if (savedToken === expectedHash) {
-isPremiumUser = true;
-badge.innerText = translations[currentLang].premium_tier;
-badge.className = "badge premium";
-document.getElementById('ad-top').style.display = 'none';
-return;
-}
-}
-badge.innerText = translations[currentLang].free_tier;
-badge.className = "badge";
-document.getElementById('ad-top').style.display = 'block';
-}
-async function executeFileProcessing() {
-if (selectedFilesList.length === 0) {
-alert(translations[currentLang].alert_select_file);
-return;
-}
-let totalSizeMB = 0;
-for(let i=0; i<selectedFilesList.length; i++) { totalSizeMB += selectedFilesList[i].size / 1024 / 1024; }
-if (!isPremiumUser) {
-if (totalSizeMB > 15 || activeTool !== 'img2pdf') {
-document.getElementById('gate-modal').style.display = 'flex';
-return;
-}
-}
-const statusLabel = document.getElementById('file-status');
-statusLabel.innerText = translations[currentLang].status_processing;
-try {
-if (activeTool === 'img2pdf') {
-const pdfDoc = await PDFLib.PDFDocument.create();
-for (let i = 0; i < selectedFilesList.length; i++) {
-const arrayBuffer = await selectedFilesList[i].arrayBuffer();
-let img = selectedFilesList[i].type === "image/png" ? await pdfDoc.embedPng(arrayBuffer) : await pdfDoc.embedJpg(arrayBuffer);
-const page = pdfDoc.addPage([img.width, img.height]);
-page.drawImage(img, { x: 0, y: 0, width: img.width, height: img.height });
-}
-const pdfBytes = await pdfDoc.save();
-triggerLocalDownload(pdfBytes, "EasyConvert_Images.pdf", "application/pdf");
-}
-else if (activeTool === 'pdf2img') {
-const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-const loadingTask = pdfjsLib.getDocument({data: arrayBuffer});
-const pdf = await loadingTask.promise;
-const page = await pdf.getPage(1);
-const viewport = page.getViewport({scale: 1.5});
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-canvas.height = viewport.height; canvas.width = viewport.width;
-await page.render({canvasContext: context, viewport: viewport}).promise;
-canvas.toBlob((blob) => { triggerBlobDownload(blob, "EasyConvert_Page_1.jpg"); }, 'image/jpeg');
-}
-else if (activeTool === 'merge') {
-const mergedPdf = await PDFLib.PDFDocument.create();
-for (let i = 0; i < selectedFilesList.length; i++) {
-const arrayBuffer = await selectedFilesList[i].arrayBuffer();
-const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-copiedPages.forEach((page) => mergedPdf.addPage(page));
-}
-const pdfBytes = await mergedPdf.save();
-triggerLocalDownload(pdfBytes, "EasyConvert_Merged.pdf", "application/pdf");
-}
-else if (activeTool === 'split') {
-const rangeInput = document.getElementById('page-range').value || "1";
-const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-const srcPdf = await PDFLib.PDFDocument.load(arrayBuffer);
-const splitPdf = await PDFLib.PDFDocument.create();
-let pageIndices = [];
-if (rangeInput.includes('-')) {
-const parts = rangeInput.split('-');
-const start = parseInt(parts[0]) - 1;
-const end = parseInt(parts[1]) - 1;
-for (let i = start; i <= end; i++) { if(i < srcPdf.getPageCount()) pageIndices.push(i); }
-} else {
-const idx = parseInt(rangeInput) - 1;
-if(idx < srcPdf.getPageCount()) pageIndices = [idx];
-}
-const copiedPages = await splitPdf.copyPages(srcPdf, pageIndices);
-copiedPages.forEach((page) => splitPdf.addPage(page));
-const pdfBytes = await splitPdf.save();
-triggerLocalDownload(pdfBytes, EasyConvert_Split_Page_${rangeInput}.pdf, "application/pdf");
-}
-else if (activeTool === 'compress') {
-const arrayBuffer = await selectedFilesList[0].arrayBuffer();
-const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
-const pdfBytes = await pdfDoc.save({ useObjectStreams: true });
-triggerLocalDownload(pdfBytes, "Compressed_" + selectedFilesList[0].name, "application/pdf");
-}
-statusLabel.innerText = translations[currentLang].status_done;
-} catch (err) {
-alert(translations[currentLang].status_error + err.message);
-statusLabel.innerText = translations[currentLang].status_error_label;
-}
-}
-function triggerLocalDownload(bytes, filename, type) {
-const blob = new Blob([bytes], { type: type });
-triggerBlobDownload(blob, filename);
-}
-function triggerBlobDownload(blob, filename) {
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob); link.download = filename;
-document.body.appendChild(link); link.click(); document.body.removeChild(link);
-URL.revokeObjectURL(link.href);
-}
-function openGateModal() {
-document.getElementById('gate-modal').style.display = 'flex';
-}
-function closeGateModal() {
-document.getElementById('gate-modal').style.display = 'none';
-}
-function startRewardedAd() {
-const btn = document.getElementById('watch-ad-btn');
-let timeLeft = 15; btn.disabled = true;
-const counter = setInterval(() => {
-btn.innerText = translations[currentLang].ad_countdown.replace("{time}", timeLeft);
-timeLeft--;
-if (timeLeft < 0) {
-clearInterval(counter);
-btn.disabled = false;
-btn.innerText = translations[currentLang].btn_watch;
-closeGateModal();
-alert(translations[currentLang].alert_ad_done);
-isPremiumUser = true;
-executeFileProcessing().then(() => {
-isPremiumUser = false;
-verifySecurePremiumToken();
-});
-}
-}, 1000);
-}
-function simulatePayment() {
-const email = prompt(translations[currentLang].prompt_email);
-if (email) {
-const generateHash = btoa(email + "_" + CRYPTO_SECRET);
-localStorage.setItem('ec_premium_user', email);
-localStorage.setItem('ec_premium_hash', generateHash);
-alert(translations[currentLang].alert_pay_done);
-closeGateModal();
-window.location.reload();
-}
-}
-// 🛠️ ตรวจจับระบบการสลับแถบเครื่องมือผ่าน Event Listeners ปลอดภัย ไม่พังแน่นอน
-document.querySelectorAll('.tab-btn').forEach(button => {
-button.addEventListener('click', function(e) {
-activeTool = this.getAttribute('data-tool');
-document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-this.classList.add('active');
-document.getElementById('split-options').style.display = (activeTool === 'split') ? 'block' : 'none';
-const currentTabName = this.innerText;
-document.getElementById('file-status').innerText = translations[currentLang].switch_text + currentTabName;
-});
-});
-// ผูกระบบปุ่มและฟิลด์ทำงานหลักเข้าด้วยกัน
-document.getElementById('lang-toggle').addEventListener('change', function() {
-changeLanguage(this.value);
-});
-document.getElementById('user-badge').addEventListener('click', openGateModal);
-document.getElementById('close-modal-btn').addEventListener('click', closeGateModal);
-document.getElementById('pay-btn').addEventListener('click', simulatePayment);
-document.getElementById('watch-ad-btn').addEventListener('click', startRewardedAd);
-document.getElementById('file-input').addEventListener('change', function(e) {
-if(e.target.files.length > 0) {
-selectedFilesList = e.target.files;
-document.getElementById('file-status').innerText = translations[currentLang].file_ready_text.replace("{count}", selectedFilesList.length);
-}
-});
-document.getElementById('process-btn').addEventListener('click', executeFileProcessing);
-// Bootstrap เริ่มต้นระบบ
-initAntiCheat();
-changeLanguage('th');
-checkPurchasingPower();
+  /* ---------- i18n ---------- */
+  const translations = {
+    th: {
+      free_tier: 'สายฟรี (Free Tier)', premium_tier: '👑 สมาชิกพรีเมียม (PRO)',
+      ad_text: '📢 [พื้นที่โฆษณา Google AdSense]',
+      drop_instruction: 'ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong>',
+      split_label: '🎯 ระบุช่วงหน้าที่ต้องการ (เช่น 1-3, 5, 7-10):', split_mode_label: 'รูปแบบผลลัพธ์',
+      mode_single: 'รวมช่วงที่เลือกเป็น PDF ไฟล์เดียว', mode_each: 'แยกแต่ละช่วงเป็นไฟล์ PDF', mode_all: 'แยกทุกหน้า (ไฟล์ละ 1 หน้า)',
+      btn_process: '🚀 เริ่มประมวลผลไฟล์ทันที', privacy_seal: '🔒 ไฟล์ประมวลผลในเบราว์เซอร์ของคุณ ไม่ถูกอัปโหลดไปเซิร์ฟเวอร์',
+      affiliate_text: '💡 ไอเทมเพื่อสุขภาพชาวออฟฟิศ: ', affiliate_link: '🛒 เลือกดูเบาะรองนั่ง Ergonomic แนะนำ',
+      modal_title: '💎 ปลดล็อกฟีเจอร์พรีเมียม', modal_desc: 'ไฟล์เกิน 15 MB, รวมเกิน 3 ไฟล์ หรือเครื่องมือนี้สำหรับสมาชิก Pro',
+      btn_pay: '💳 ชำระเงินเพื่อเปิดใช้งาน Pro', or_text: '- หรือเลือกสายฟรีแลกเวลา -', btn_watch: '📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง',
+      ad_countdown: '⏳ กำลังรับชมโฆษณา... ({0} วินาที)', btn_close: 'ปิดหน้าต่าง',
+      price_th: '👑 Pro รายเดือน: 29 บาท (PromptPay)', price_global: '👑 Premium Monthly: $1.99 USD (Card)',
+      no_file: 'ยังไม่ได้เลือกไฟล์', switch_text: 'สลับมาใช้งาน: {0}', file_ready: '📎 พร้อมประมวลผล: {0} ({1})', files_n: '{0} ไฟล์',
+      bad_type: '❌ เครื่องมือนี้ไม่รองรับไฟล์ประเภทนี้', too_big: '❌ ไฟล์รวมกันใหญ่เกิน 150 MB', pick_first: 'กรุณาเลือกไฟล์ก่อนครับ!',
+      processing: '⏳ กำลังประมวลผลในเครื่องของคุณอย่างปลอดภัย...', step: '⏳ กำลังทำงาน {0}/{1}', done: '🎉 เสร็จสมบูรณ์! กดปุ่มดาวน์โหลดด้านล่าง',
+      error: '❌ เกิดข้อผิดพลาด: {0}', generic_err: 'ประมวลผลไม่สำเร็จ', lib_fail: 'โหลดไลบรารีไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต',
+      need_two: 'เลือกไฟล์ PDF อย่างน้อย 2 ไฟล์เพื่อรวม', open_fail: 'เปิดไฟล์ "{0}" ไม่ได้ (อาจมีรหัสผ่านหรือไฟล์เสียหาย)',
+      range_empty: 'กรุณากรอกช่วงหน้า เช่น 1-3, 5', range_bad: 'ช่วงหน้าไม่ถูกต้อง: "{0}"', range_out: 'หน้า {0} เกินจำนวนหน้าของไฟล์ ({1} หน้า)',
+      page_info: 'ไฟล์นี้มี {0} หน้า · โหมดแยกทุกหน้ารองรับสูงสุด {1} หน้า', reading: '⏳ กำลังอ่านจำนวนหน้า...', page_wait: 'ยังอ่านจำนวนหน้าไม่เสร็จ ลองอีกครั้ง',
+      small: 'ℹ️ ไฟล์นี้ถูกบีบอัดมาดีอยู่แล้ว ลดขนาดไม่ได้อีก', saved: ' · ลด {0}%', pages_n: ' · {0} หน้า',
+      download: 'ดาวน์โหลด', download_all: '⬇️ ดาวน์โหลดทั้งหมด ({0} ไฟล์)', merge_note: 'ลำดับในรายการ = ลำดับในไฟล์ที่รวม',
+      limit_note: '⚠️ สายฟรีรวมได้ไม่เกิน 3 ไฟล์ เกินนี้ต้องดูโฆษณาหรืออัปเกรด Pro',
+      dev_warn: '🔒 ตรวจพบ Developer Tools ระบบหยุดชั่วคราวจนกว่าจะปิด', tamper_warn: '🔒 ตรวจพบการแก้ไขหน้าเว็บ กรุณารีโหลด',
+      demo_off: 'ระบบชำระเงินจริงยังไม่เปิดใช้งาน', prompt_email: 'เดโม: กรอกอีเมลเพื่อทดลองใช้ Pro 30 วัน', pro_on: '🎉 เปิดใช้งาน Pro แล้ว (โหมดเดโม)'
+    },
+    en: {
+      free_tier: 'Free Tier', premium_tier: '👑 Premium Member (PRO)',
+      ad_text: '📢 [Google AdSense ad slot]',
+      drop_instruction: 'Drag & drop files here or <strong>click to browse</strong>',
+      split_label: '🎯 Page ranges to keep (e.g. 1-3, 5, 7-10):', split_mode_label: 'Output mode',
+      mode_single: 'Combine selected pages into one PDF', mode_each: 'One PDF per range', mode_all: 'Every page as its own PDF',
+      btn_process: '🚀 Process File Now', privacy_seal: '🔒 Files are processed in your browser and never uploaded to a server',
+      affiliate_text: '💡 Productivity gear: ', affiliate_link: '🛒 Check recommended ergonomic seat cushions',
+      modal_title: '💎 Unlock Premium Features', modal_desc: 'File over 15 MB, more than 3 files, or a Pro-only tool.',
+      btn_pay: '💳 Pay to activate Pro', or_text: '- Or stay free and trade a little time -', btn_watch: '📺 Watch a 15s ad for 1 free use',
+      ad_countdown: '⏳ Watching ad... ({0}s)', btn_close: 'Close',
+      price_th: '👑 Pro monthly: 29 THB (PromptPay)', price_global: '👑 Premium monthly: $1.99 USD (Card)',
+      no_file: 'No file selected', switch_text: 'Switched to: {0}', file_ready: '📎 Ready: {0} ({1})', files_n: '{0} files',
+      bad_type: '❌ This tool does not accept that file type.', too_big: '❌ Files total more than 150 MB.', pick_first: 'Please select a file first!',
+      processing: '⏳ Processing safely on your device...', step: '⏳ Working {0}/{1}', done: '🎉 Done! Use the download buttons below.',
+      error: '❌ Error: {0}', generic_err: 'Processing failed', lib_fail: 'Libraries failed to load. Check your connection.',
+      need_two: 'Select at least 2 PDF files to merge.', open_fail: 'Cannot open "{0}" (password-protected or damaged).',
+      range_empty: 'Enter a page range, e.g. 1-3, 5', range_bad: 'Invalid page range: "{0}"', range_out: 'Page {0} is outside the document ({1} pages)',
+      page_info: 'This file has {0} pages · "every page" mode supports up to {1}', reading: '⏳ Reading page count...', page_wait: 'Still reading page count, try again.',
+      small: 'ℹ️ This file is already well optimised and cannot be reduced.', saved: ' · saved {0}%', pages_n: ' · {0} pages',
+      download: 'Download', download_all: '⬇️ Download all ({0} files)', merge_note: 'List order = order in merged file',
+      limit_note: '⚠️ Free plan merges up to 3 files. Watch an ad or upgrade to Pro for more.',
+      dev_warn: '🔒 Developer tools detected. Paused until closed.', tamper_warn: '🔒 Page tampering detected. Please reload.',
+      demo_off: 'Real payments are not enabled yet.', prompt_email: 'Demo: enter your email to try Pro for 30 days', pro_on: '🎉 Pro enabled (demo mode)'
+    }
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const S = { lang: 'th', pro: false, tool: 'img2pdf', files: [], country: 'XX', adCredit: 0, busy: false, devOpen: false, tamper: false, st: ['no_file', []], pageCount: 0, adLeft: 0 };
+  try { const sv = localStorage.getItem(CFG.LANG_KEY); S.lang = sv === 'en' || sv === 'th' ? sv : ((navigator.language || '').toLowerCase().indexOf('th') === 0 ? 'th' : 'en'); } catch (e) {}
+  const t = (k, a) => { let s = translations[S.lang][k] || k; (a || []).forEach((v, i) => { s = s.replace('{' + i + '}', v); }); return s; };
+  const fmt = (n) => n >= 1048576 ? (n / 1048576).toFixed(2) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
+  const baseName = (n) => n.replace(/\.[^.]+$/, '');
+  const frozen = () => S.devOpen || S.tamper;
+  const setStatus = (k, a) => { S.st = [k, a || []]; $('file-status').textContent = t(k, a); };
+  const TOOLNAME = { img2pdf: 'Image to PDF', pdf2img: 'PDF to Image', merge: 'Merge PDF', split: 'Split PDF', compress: 'PDF Compressor' };
+
+  function applyLang() {
+    document.documentElement.lang = S.lang;
+    document.querySelectorAll('[data-i18n]').forEach((el) => {
+      const k = el.getAttribute('data-i18n');
+      if (k === 'drop_instruction') el.innerHTML = translations[S.lang][k]; else el.textContent = t(k);
+    });
+    $('price-text').textContent = t(S.country === 'TH' ? 'price_th' : 'price_global');
+    $('user-badge').textContent = t(S.pro ? 'premium_tier' : 'free_tier'); $('user-badge').className = 'badge' + (S.pro ? ' premium' : '');
+    $('ad-top').style.display = S.pro ? 'none' : '';
+    $('file-status').textContent = t(S.st[0], S.st[1]);
+    $('freeze-msg').textContent = t(S.tamper ? 'tamper_warn' : 'dev_warn'); $('freeze').classList.toggle('on', frozen());
+    if (!adTimer) $('watch-ad-btn').textContent = t('btn_watch'); else $('watch-ad-btn').textContent = t('ad_countdown', [S.adLeft]);
+    document.querySelectorAll('.res button.dl').forEach((b) => { b.textContent = t('download'); });
+    if (S.tool === 'split' && S.pageCount) $('split-hint').textContent = t('page_info', [S.pageCount, CFG.MAX_PAGES]);
+    renderList();
+  }
+
+  /* ---------- Signed premium token (HMAC-SHA256) ---------- */
+  const enc = new TextEncoder();
+  const hmac = async (msg) => {
+    const k = await crypto.subtle.importKey('raw', enc.encode(CFG.SECRET + '|' + location.hostname), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const b = new Uint8Array(await crypto.subtle.sign('HMAC', k, enc.encode(msg))); let o = ''; b.forEach((x) => { o += String.fromCharCode(x); }); return btoa(o);
+  };
+  const safeEq = (a, b) => { if (a.length !== b.length) return false; let r = 0; for (let i = 0; i < a.length; i++) r |= a.charCodeAt(i) ^ b.charCodeAt(i); return r === 0; };
+  const wipeToken = () => { try { localStorage.removeItem(CFG.KEY); } catch (e) {} };
+  async function verifyToken() {
+    let raw = null; try { raw = localStorage.getItem(CFG.KEY); } catch (e) {}
+    let ok = false;
+    if (raw && window.crypto && crypto.subtle) {
+      const p = raw.split('.');
+      try { if (p.length === 2 && safeEq(await hmac(p[0]), p[1])) { const d = JSON.parse(atob(p[0])); ok = d.t === 'pro' && typeof d.e === 'number' && d.e > Date.now(); } } catch (e) {}
+      if (!ok) wipeToken();
+    }
+    if (ok !== S.pro) { S.pro = ok; applyLang(); }
+  }
+  async function grantPro(days, email) {
+    const payload = btoa(JSON.stringify({ t: 'pro', e: Date.now() + days * 864e5, m: String(email).slice(0, 80) }));
+    try { localStorage.setItem(CFG.KEY, payload + '.' + await hmac(payload)); } catch (e) {}
+    await verifyToken();
+  }
+  window.addEventListener('storage', verifyToken);
+  setInterval(verifyToken, 3000);
+
+  /* ---------- Anti-tamper: freeze (never wipes a customer's token, never reloads) ---------- */
+  setInterval(() => {
+    const big = window.outerWidth - window.innerWidth > 160 || window.outerHeight - window.innerHeight > 200;
+    const t0 = performance.now(); (function () { debugger; })();
+    const now = big || performance.now() - t0 > 100;
+    if (now !== S.devOpen) { S.devOpen = now; applyLang(); }
+  }, 1500);
+  new MutationObserver((list) => list.forEach((m) => m.addedNodes.forEach((n) => {
+    if (!n.tagName || !/^(SCRIPT|IFRAME|OBJECT|EMBED)$/.test(n.tagName)) return;
+    const src = n.src || '';
+    if (!src || !CFG.ALLOWED.some((a) => src.indexOf(a) === 0)) { S.tamper = true; S.pro = false; wipeToken(); n.remove(); applyLang(); }
+  }))).observe(document.documentElement, { childList: true, subtree: true });
+
+  /* ---------- Geo pricing ---------- */
+  async function geo() {
+    let tz = ''; try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
+    S.country = tz === 'Asia/Bangkok' ? 'TH' : 'XX'; applyLang();
+    try {
+      const c = new AbortController(), to = setTimeout(() => c.abort(), 4000);
+      const d = await (await fetch('https://ipapi.co/json/', { cache: 'no-store', signal: c.signal })).json(); clearTimeout(to);
+      if (d && (d.country_code || d.country)) S.country = String(d.country_code || d.country).toUpperCase();
+    } catch (e) {}
+    applyLang();
+  }
+
+  /* ---------- Progress + results + downloads ---------- */
+  function setProgress(p) { const v = Math.max(0, Math.min(1, p)); $('progress').classList.add('on'); $('bar').style.width = (v * 100) + '%'; $('progress').setAttribute('aria-valuenow', Math.round(v * 100)); }
+  function hideProgress() { $('progress').classList.remove('on'); $('bar').style.width = '0%'; }
+  function triggerBlobDownload(blob, name) {
+    const url = URL.createObjectURL(blob), a = document.createElement('a');
+    a.href = url; a.download = name; a.rel = 'noopener'; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1500);   // delayed: immediate revoke can cancel large downloads
+  }
+  function addResult(name, blob, extra) {
+    const d = document.createElement('div'); d.className = 'res';
+    const s = document.createElement('span'); s.textContent = name + ' (' + fmt(blob.size) + ')' + (extra || '');
+    const b = document.createElement('button'); b.className = 'dl'; b.textContent = t('download');
+    b.addEventListener('click', () => triggerBlobDownload(blob, name));
+    d.append(s, b); $('results').appendChild(d);
+  }
+
+  /* ---------- Engines ---------- */
+  let workerReady = false;
+  async function engines() {
+    if (!window.PDFLib || !window.pdfjsLib) throw new Error(t('lib_fail'));
+    if (!workerReady) {
+      const js = await (await fetch(CFG.WORKER)).text();
+      pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([js], { type: 'text/javascript' })); workerReady = true;
+    }
+  }
+  const needLib = () => { if (!window.PDFLib) throw new Error(t('lib_fail')); };
+  const toBlob = (c, q) => new Promise((r) => c.toBlob(r, 'image/jpeg', q));
+  async function loadPdfJs(f) { await engines(); return pdfjsLib.getDocument({ data: await f.arrayBuffer() }).promise; }
+  async function renderPage(doc, n, scale) {
+    const page = await doc.getPage(n), vp = page.getViewport({ scale }), base = page.getViewport({ scale: 1 });
+    const c = document.createElement('canvas'); c.width = Math.ceil(vp.width); c.height = Math.ceil(vp.height);
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height);
+    await page.render({ canvasContext: x, viewport: vp }).promise; page.cleanup();
+    return { c, w: base.width, h: base.height };
+  }
+
+  async function imgToPdf() {
+    needLib(); const pdf = await PDFLib.PDFDocument.create();
+    for (let i = 0; i < S.files.length; i++) {
+      const f = S.files[i]; setStatus('step', [i + 1, S.files.length]); setProgress(i / S.files.length);
+      const buf = await f.arrayBuffer(), im = f.type === 'image/png' ? await pdf.embedPng(buf) : await pdf.embedJpg(buf);
+      pdf.addPage([im.width, im.height]).drawImage(im, { x: 0, y: 0, width: im.width, height: im.height });
+    }
+    const blob = new Blob([await pdf.save()], { type: 'application/pdf' });
+    addResult('EasyConvert_Images.pdf', blob); triggerBlobDownload(blob, 'EasyConvert_Images.pdf');
+  }
+  async function pdfToImg() {
+    const f = S.files[0], doc = await loadPdfJs(f), total = Math.min(doc.numPages, CFG.MAX_PAGES);
+    for (let n = 1; n <= total; n++) {
+      setStatus('step', [n, total]); setProgress((n - 1) / total);
+      const r = await renderPage(doc, n, 2), b = await toBlob(r.c, 0.92); r.c.width = r.c.height = 0;
+      addResult('EasyConvert_' + baseName(f.name) + '_Page_' + n + '.jpg', b);
+    }
+    doc.destroy();
+  }
+  async function mergePdf() {
+    needLib(); if (S.files.length < 2) throw new Error(t('need_two'));
+    const out = await PDFLib.PDFDocument.create();
+    for (let i = 0; i < S.files.length; i++) {
+      const f = S.files[i]; setStatus('step', [i + 1, S.files.length]); setProgress(i / S.files.length);
+      let src; try { src = await PDFLib.PDFDocument.load(await f.arrayBuffer()); } catch (e) { throw new Error(t('open_fail', [f.name])); }
+      (await out.copyPages(src, src.getPageIndices())).forEach((p) => out.addPage(p));
+    }
+    const blob = new Blob([await out.save()], { type: 'application/pdf' });
+    addResult('EasyConvert_Merged.pdf', blob, t('pages_n', [out.getPageCount()])); triggerBlobDownload(blob, 'EasyConvert_Merged.pdf');
+  }
+  function parseRanges(str, max) {
+    const parts = String(str).split(/[,\s]+/).filter(Boolean);
+    if (!parts.length) throw new Error(t('range_empty'));
+    return parts.map((p) => {
+      const m = p.match(/^(\d+)(?:-(\d+))?$/); if (!m) throw new Error(t('range_bad', [p]));
+      let a = +m[1], b = m[2] ? +m[2] : a;
+      if (a < 1 || b < 1 || a > max || b > max) throw new Error(t('range_out', [p, max]));
+      if (a > b) { const x = a; a = b; b = x; }
+      const idx = []; for (let i = a; i <= b; i++) idx.push(i - 1);
+      return { label: a === b ? String(a) : a + '-' + b, idx };
+    });
+  }
+  async function loadPageCount() {
+    const f = S.files[0]; S.pageCount = 0; $('split-hint').textContent = t('reading');
+    try {
+      needLib(); const d = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+      if (S.files[0] !== f) return; S.pageCount = d.getPageCount(); $('split-hint').textContent = t('page_info', [S.pageCount, CFG.MAX_PAGES]);
+    } catch (e) { if (S.files[0] !== f) return; S.files = []; $('split-hint').textContent = '❌ ' + t('open_fail', [f.name]); setStatus('no_file'); }
+  }
+  async function splitPdf() {
+    needLib(); if (!S.pageCount) throw new Error(t('page_wait'));
+    const f = S.files[0], mode = $('split-mode').value, base = baseName(f.name);
+    const groups = mode === 'all' ? Array.from({ length: Math.min(S.pageCount, CFG.MAX_PAGES) }, (_, i) => ({ label: String(i + 1), idx: [i] })) : parseRanges($('page-range').value, S.pageCount);
+    const src = await PDFLib.PDFDocument.load(await f.arrayBuffer());
+    if (mode === 'single') {
+      const out = await PDFLib.PDFDocument.create(), idx = [].concat(...groups.map((g) => g.idx));
+      (await out.copyPages(src, idx)).forEach((p) => out.addPage(p));
+      const blob = new Blob([await out.save()], { type: 'application/pdf' }), name = 'EasyConvert_Split_' + base + '.pdf';
+      addResult(name, blob, t('pages_n', [idx.length])); triggerBlobDownload(blob, name); return;
+    }
+    const files = [];
+    for (let i = 0; i < groups.length; i++) {
+      setStatus('step', [i + 1, groups.length]); setProgress(i / groups.length);
+      const out = await PDFLib.PDFDocument.create(); (await out.copyPages(src, groups[i].idx)).forEach((p) => out.addPage(p));
+      const blob = new Blob([await out.save()], { type: 'application/pdf' }), name = 'EasyConvert_Split_' + base + '_p' + groups[i].label + '.pdf';
+      files.push({ name, blob }); addResult(name, blob, t('pages_n', [groups[i].idx.length]));
+    }
+    if (files.length > 1) {
+      const all = document.createElement('button'); all.className = 'btn-main'; all.style.marginTop = '0'; all.textContent = t('download_all', [files.length]);
+      all.addEventListener('click', () => files.forEach((o, i) => setTimeout(() => triggerBlobDownload(o.blob, o.name), i * 400)));
+      $('results').insertBefore(all, $('results').firstChild);
+    }
+  }
+  async function compressPdf() {
+    needLib(); const f = S.files[0], doc = await loadPdfJs(f), total = Math.min(doc.numPages, CFG.MAX_PAGES), pdf = await PDFLib.PDFDocument.create();
+    for (let n = 1; n <= total; n++) {
+      setStatus('step', [n, total]); setProgress((n - 1) / total);
+      const r = await renderPage(doc, n, 1.5), buf = await (await toBlob(r.c, CFG.JPEG_Q)).arrayBuffer(); r.c.width = r.c.height = 0;
+      const im = await pdf.embedJpg(buf); pdf.addPage([r.w, r.h]).drawImage(im, { x: 0, y: 0, width: r.w, height: r.h });
+    }
+    doc.destroy();
+    const blob = new Blob([await pdf.save()], { type: 'application/pdf' });
+    if (blob.size >= f.size) { setStatus('small'); return 'small'; }
+    addResult('Compressed_' + f.name, blob, t('saved', [Math.round((1 - blob.size / f.size) * 100)]));
+  }
+
+  /* ---------- Gate + run (executeFileProcessing) ---------- */
+  function needsGate() {
+    if (S.pro || S.adCredit >= 1) return false;
+    const big = S.files.some((f) => f.size > CFG.AD_LIMIT);
+    if (S.tool === 'merge') return S.files.length > 3 || big;
+    if (S.tool === 'img2pdf' || S.tool === 'split') return big;
+    return true;                                    // pdf2img, compress: Pro or ad
+  }
+  async function executeFileProcessing() {
+    if (!S.files.length) return setStatus('pick_first');
+    if (S.busy || frozen()) return;
+    if (needsGate()) return openGateModal();
+    if (!S.pro && S.adCredit > 0) S.adCredit--;     // one ad = one use
+    S.busy = true; $('process-btn').disabled = true; $('results').textContent = ''; setStatus('processing'); setProgress(0.03);
+    try {
+      const r = await ({ img2pdf: imgToPdf, pdf2img: pdfToImg, merge: mergePdf, split: splitPdf, compress: compressPdf }[S.tool])();
+      setProgress(1); if (r !== 'small') setStatus('done');
+    } catch (e) { setStatus('error', [e && e.message ? e.message : t('generic_err')]); }
+    finally { S.busy = false; $('process-btn').disabled = false; setTimeout(hideProgress, 900); }
+  }
+
+  /* ---------- Modal, rewarded ad, payment ---------- */
+  let adTimer = null;
+  function openGateModal() { if (!frozen()) $('gate-modal').classList.add('on'); }
+  function closeGateModal() { clearInterval(adTimer); adTimer = null; $('watch-ad-btn').disabled = false; $('watch-ad-btn').textContent = t('btn_watch'); $('gate-modal').classList.remove('on'); }
+  function startRewardedAd() {
+    if (adTimer) return; S.adLeft = CFG.AD_SECONDS; $('watch-ad-btn').disabled = true;
+    const tick = () => {
+      $('watch-ad-btn').textContent = t('ad_countdown', [S.adLeft]);
+      if (S.adLeft-- <= 0) { clearInterval(adTimer); adTimer = null; S.adCredit = 1; closeGateModal(); executeFileProcessing(); }
+    };
+    tick(); adTimer = setInterval(tick, 1000);
+  }
+  async function simulatePayment() {
+    if (!CFG.DEMO) return setStatus('demo_off');
+    const email = prompt(t('prompt_email')); if (!email) return;
+    await grantPro(30, email); closeGateModal(); setStatus('pro_on');
+  }
+
+  /* ---------- Files, list, tabs ---------- */
+  const multiTool = () => S.tool === 'img2pdf' || S.tool === 'merge';
+  const keyOf = (f) => f.name + '|' + f.size + '|' + f.lastModified;
+  function setFiles(list) {
+    if (frozen()) return;
+    const isImg = S.tool === 'img2pdf';
+    let a = Array.from(list).filter((f) => isImg ? /^image\/(png|jpeg)$/.test(f.type) : (f.type === 'application/pdf' || /\.pdf$/i.test(f.name)));
+    if (!a.length) return setStatus('bad_type');
+    if (!multiTool()) a = [a[0]];
+    if (S.tool === 'merge') { const seen = new Set(S.files.map(keyOf)); a = S.files.concat(a.filter((f) => !seen.has(keyOf(f)))); }
+    const total = a.reduce((x, f) => x + f.size, 0);
+    if (total > CFG.HARD_LIMIT) return setStatus('too_big');
+    S.files = a; $('results').textContent = ''; renderList();
+    setStatus('file_ready', [a.length === 1 ? a[0].name : t('files_n', [a.length]), fmt(total)]);
+    if (S.tool === 'split') loadPageCount();
+  }
+  function renderList() {
+    const box = $('file-list'); box.textContent = '';
+    const show = multiTool() && S.files.length > 0; box.classList.toggle('on', show); if (!show) return;
+    const head = document.createElement('div'); head.className = 'fl-head';
+    const h1 = document.createElement('span'); h1.textContent = '📚 ' + t('files_n', [S.files.length]) + ' · ' + fmt(S.files.reduce((x, f) => x + f.size, 0));
+    const h2 = document.createElement('span'); h2.textContent = S.tool === 'merge' ? t('merge_note') : ''; head.append(h1, h2); box.appendChild(head);
+    if (S.tool === 'merge' && !S.pro && S.files.length > 3) { const n = document.createElement('div'); n.className = 'fl-note'; n.textContent = t('limit_note'); box.appendChild(n); }
+    S.files.forEach((f, i) => {
+      const r = document.createElement('div'); r.className = 'fl-row';
+      const ix = document.createElement('span'); ix.className = 'fl-i'; ix.textContent = i + 1;
+      const nm = document.createElement('span'); nm.className = 'fl-n'; nm.textContent = f.name; nm.title = f.name;
+      const sz = document.createElement('span'); sz.className = 'fl-s'; sz.textContent = fmt(f.size); r.append(ix, nm, sz);
+      [['up', '↑', i === 0], ['down', '↓', i === S.files.length - 1], ['del', '✕', false]].forEach(([act, ch, dis]) => {
+        const b = document.createElement('button'); b.type = 'button'; b.dataset.act = act; b.dataset.i = i; b.textContent = ch; b.disabled = dis; b.setAttribute('aria-label', act); r.appendChild(b);
+      });
+      box.appendChild(r);
+    });
+  }
+  $('file-list').addEventListener('click', (e) => {
+    const b = e.target.closest('button[data-act]'); if (!b || S.busy || frozen()) return;
+    const i = +b.dataset.i, f = S.files;
+    if (b.dataset.act === 'del') f.splice(i, 1);
+    else if (b.dataset.act === 'up' && i > 0) [f[i - 1], f[i]] = [f[i], f[i - 1]];
+    else if (b.dataset.act === 'down' && i < f.length - 1) [f[i + 1], f[i]] = [f[i], f[i + 1]];
+    renderList(); f.length ? setStatus('file_ready', [t('files_n', [f.length]), fmt(f.reduce((x, y) => x + y.size, 0))]) : setStatus('no_file');
+  });
+  function setTool(k) {
+    if (frozen() || S.busy) return;
+    S.tool = k; S.files = []; S.pageCount = 0; $('results').textContent = ''; hideProgress(); $('split-hint').textContent = '';
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.toggle('active', b.dataset.tool === k));
+    const i = $('file-input'); i.accept = k === 'img2pdf' ? 'image/png,image/jpeg' : 'application/pdf'; i.multiple = multiTool();
+    $('split-options').classList.toggle('on', k === 'split'); renderList(); setStatus('switch_text', [TOOLNAME[k]]);
+  }
+
+  /* ---------- Wiring ---------- */
+  const drop = $('drop-area'), input = $('file-input');
+  drop.addEventListener('click', () => { if (!frozen()) input.click(); });
+  drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+  ['dragenter', 'dragover'].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave', 'drop'].forEach((n) => drop.addEventListener(n, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', (e) => setFiles(e.dataTransfer.files));
+  input.addEventListener('change', () => { setFiles(input.files); input.value = ''; });
+  document.querySelectorAll('.tab-btn').forEach((b) => b.addEventListener('click', () => setTool(b.dataset.tool)));
+  $('lang-toggle').addEventListener('change', (e) => { S.lang = e.target.value === 'en' ? 'en' : 'th'; try { localStorage.setItem(CFG.LANG_KEY, S.lang); } catch (x) {} applyLang(); });
+  $('user-badge').addEventListener('click', openGateModal);
+  $('user-badge').addEventListener('keydown', (e) => { if (e.key === 'Enter') openGateModal(); });
+  $('close-modal-btn').addEventListener('click', closeGateModal);
+  $('pay-btn').addEventListener('click', simulatePayment);
+  $('watch-ad-btn').addEventListener('click', startRewardedAd);
+  $('process-btn').addEventListener('click', executeFileProcessing);
+
+  /* ---------- Boot ---------- */
+  $('lang-toggle').value = S.lang; setStatus('no_file'); applyLang(); verifyToken(); geo();
 })();
+</script>
+</body>
+</html>
