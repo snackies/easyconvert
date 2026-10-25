@@ -15,10 +15,10 @@ module.exports = async (req, res) => {
   p.append("mode", "payment");
   // วิธีชำระเงินที่แสดง (PromptPay / บัตร) ตั้งค่าที่ Stripe Dashboard > Settings > Payment methods
   p.append("success_url", origin + "/?session_id={CHECKOUT_SESSION_ID}");
-  p.append("cancel_url", origin + "/");
+  p.append("cancel_url", origin + "/?canceled=1");
   p.append("line_items[0][quantity]", "1");
   p.append("line_items[0][price_data][currency]", "thb");
-  p.append("line_items[0][price_data][unit_amount]", "1000"); // 29 บาท (หน่วยสตางค์)
+  p.append("line_items[0][price_data][unit_amount]", "2900"); // 29 บาท (หน่วยสตางค์)
   p.append("line_items[0][price_data][product_data][name]", "EasyConvert Pro (30 days)");
  
   try {
@@ -36,7 +36,7 @@ module.exports = async (req, res) => {
       console.error("Stripe error:", r.status, data && data.error && data.error.message);
       return res.status(502).json({ error: "stripe_error" });
     }
-    return res.status(200).json({ url: data.url });
+    return res.status(200).json({ url: data.url, id: data.id });
   } catch (e) {
     console.error("Stripe unreachable:", e.message);
     return res.status(502).json({ error: "stripe_unreachable" });
