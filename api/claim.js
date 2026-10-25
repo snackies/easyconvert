@@ -1,31 +1,96 @@
 const { sign, readBody } = require("../lib/token");
  
 const PASS_DAYS = 30;
+const STRIPE = "https://api.stripe.com/v1/checkout/sessions";
  
-// หลังจ่ายเงินสำเร็จ Stripe จะ redirect กลับมาพร้อม session_id
-// ฟังก์ชันนี้ถามยืนยันกับ Stripe โดยตรง แล้วออก token ที่เซ็นด้วย secret ฝั่งเซิร์ฟเวอร์
+// จำกัดการลองเดา (best-effort: serverless อาจรีเซ็ตเมื่อ instance ใหม่)
+const attempts = new Map();
+function tooMany(ip) {
+  const now = Date.now();
+  if (attempts.size > 1000) attempts.clear();
+  const recent = (attempts.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
+  recent.push(now);
+  attempts.set(ip, recent);
+  return recent.length > 10;
+}
+ 
+async function stripeGet(url, key) {
+  const r = await fetch(url, { headers: { Authorization: "Bearer " + key } });
+  const json = await r.json();
+  if (!r.ok) {
+    const msg = (json.error && json.error.message) || "stripe_error";
+    const err = new Error(msg);
+    err.code = /permission/i.test(msg) ? "stripe_permission" : "stripe_error";
+    throw err;
+  }
+  return json;
+}
+ 
+// กรณีมีรหัส cs_... หรือ pi_...
+async function findById(id, key) {
+  if (id.startsWith("pi_")) {
+    const list = await stripeGet(STRIPE + "?limit=1&payment_intent=" + encodeURIComponent(id), key);
+    return (list.data && list.data[0]) || null;
+  }
+  return stripeGet(STRIPE + "/" + encodeURIComponent(id), key);
+}
+ 
+// กรณีผู้ใช้กรอกอีเมล + เลขที่ใบเสร็จ (ต้องตรงกันทั้งคู่)
+async function findByEmailAndReceipt(email, receipt, key) {
+  const want = receipt.replace(/\D/g, "");
+  const variants = [...new Set([email, email.toLowerCase()])];
+  for (const e of variants) {
+    const q = new URLSearchParams();
+    q.append("limit", "30");
+    q.append("customer_details[email]", e);
+    q.append("expand[]", "data.payment_intent.latest_charge");
+    const list = await stripeGet(STRIPE + "?" + q.toString(), key);
+    const hit = (list.data || [])
+      .filter((s) => s.payment_status === "paid")
+      .filter((s) => {
+        const ch = s.payment_intent && s.payment_intent.latest_charge;
+        return ch && ch.receipt_number && ch.receipt_number.replace(/\D/g, "") === want;
+      })
+      .sort((a, b) => b.created - a.created)[0];
+    if (hit) return hit;
+  }
+  return null;
+}
+ 
 module.exports = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
  
   const key = process.env.STRIPE_SECRET_KEY;
-  if (!key) return res.status(500).json({ error: "stripe_not_configured" });
- 
-  const { session_id } = readBody(req);
-  if (typeof session_id !== "string" || !/^(cs|pi)_[A-Za-z0-9_]+$/.test(session_id)) {
-    return res.status(400).json({ error: "bad_session" });
+  if (!key) {
+    console.error("STRIPE_SECRET_KEY is missing");
+    return res.status(500).json({ error: "stripe_not_configured" });
   }
  
+  const body = readBody(req);
+ 
   try {
-    // รับได้ทั้งรหัส Checkout session (cs_...) และรหัส Payment (pi_...) จากอีเมล/Dashboard ของ Stripe
-    const isPayment = session_id.startsWith("pi_");
-    const url = isPayment
-      ? "https://api.stripe.com/v1/checkout/sessions?limit=1&payment_intent=" + encodeURIComponent(session_id)
-      : "https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(session_id);
-    const r = await fetch(url, { headers: { Authorization: "Bearer " + key } });
-    let s = await r.json();
-    if (isPayment) s = (s.data && s.data[0]) || {};
-    if (!r.ok || s.payment_status !== "paid") {
-      console.error("claim: not paid", r.status, s.payment_status, s.error && s.error.message);
+    let s = null;
+ 
+    if (typeof body.session_id === "string") {
+      const id = body.session_id.trim();
+      if (!/^(cs|pi)_[A-Za-z0-9_]+$/.test(id)) return res.status(400).json({ error: "bad_session" });
+      s = await findById(id, key);
+    } else if (typeof body.email === "string" && typeof body.receipt === "string") {
+      const email = body.email.trim();
+      const digits = body.receipt.replace(/\D/g, "");
+      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || digits.length < 8) {
+        return res.status(400).json({ error: "bad_input" });
+      }
+      const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+      if (tooMany(ip)) return res.status(429).json({ error: "too_many_attempts" });
+      s = await findByEmailAndReceipt(email, body.receipt, key);
+      if (!s) return res.status(404).json({ error: "not_found" });
+    } else {
+      return res.status(400).json({ error: "bad_request" });
+    }
+ 
+    if (!s || s.payment_status !== "paid") {
       return res.status(402).json({ error: "not_paid" });
     }
     const exp = s.created + PASS_DAYS * 86400;
@@ -35,8 +100,7 @@ module.exports = async (req, res) => {
     return res.status(200).json({ token, exp });
   } catch (e) {
     console.error("claim failed:", e.message);
-    const code = /TOKEN_SECRET/.test(e.message) ? "token_secret_missing" : "verify_failed";
-    return res.status(502).json({ error: code });
+    if (/TOKEN_SECRET/.test(e.message)) return res.status(502).json({ error: "token_secret_missing" });
+    return res.status(502).json({ error: e.code || "verify_failed" });
   }
 };
- 
