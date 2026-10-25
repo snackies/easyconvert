@@ -91,6 +91,11 @@
  
   /* ---------- Premium (ตรวจสอบฝั่งเซิร์ฟเวอร์) ---------- */
  
+  const PENDING_KEY = "ec_pending_session";
+  const PENDING_AT_KEY = "ec_pending_at";
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let claiming = false;
+ 
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
@@ -100,55 +105,117 @@
     return { ok: res.ok, status: res.status, data: await res.json().catch(() => ({})) };
   }
  
+  function getPending() {
+    try { return localStorage.getItem(PENDING_KEY); } catch (e) { return null; }
+  }
+  function setPending(id) {
+    try {
+      localStorage.setItem(PENDING_KEY, id);
+      localStorage.setItem(PENDING_AT_KEY, String(Date.now()));
+    } catch (e) {}
+  }
+  function clearPending() {
+    try {
+      localStorage.removeItem(PENDING_KEY);
+      localStorage.removeItem(PENDING_AT_KEY);
+    } catch (e) {}
+  }
+  function pendingAgeMs() {
+    try { return Date.now() - Number(localStorage.getItem(PENDING_AT_KEY) || 0); } catch (e) { return Infinity; }
+  }
+ 
+  // อ่านวันหมดอายุจาก token ในเครื่อง (ใช้เป็นตัวสำรองเมื่อเซิร์ฟเวอร์ตอบไม่ได้ชั่วคราว)
+  function readLocalExp() {
+    try {
+      const tok = localStorage.getItem("ec_token");
+      if (!tok) return 0;
+      const b64 = tok.split(".")[0].replace(/-/g, "+").replace(/_/g, "/");
+      return JSON.parse(atob(b64)).exp || 0;
+    } catch (e) {
+      return 0;
+    }
+  }
+ 
   async function verifyPremium() {
     const token = localStorage.getItem("ec_token");
     isPremiumUser = false;
     if (token) {
+      let answered = false;
       try {
         const { ok, data } = await postJSON("/api/verify", { token });
         if (ok) {
+          answered = true;
           isPremiumUser = !!data.premium;
           if (!data.premium) localStorage.removeItem("ec_token");
         }
-        // ถ้าเซิร์ฟเวอร์ error (เช่น ตั้งค่า env ไม่ครบ) จะไม่ลบ token ทิ้ง
-      } catch (e) {
-        /* ออฟไลน์: ถือว่ายังไม่ใช่พรีเมียมชั่วคราว */
-      }
+      } catch (e) {}
+      // เซิร์ฟเวอร์ตอบไม่ได้ชั่วคราว: เชื่อวันหมดอายุในเครื่อง เพื่อไม่ให้ผู้ที่จ่ายแล้วถูกล็อกเอง
+      if (!answered && readLocalExp() * 1000 > Date.now()) isPremiumUser = true;
     }
     renderBadge();
   }
  
+  // ได้รับ token จากเซิร์ฟเวอร์: ปลดล็อกทันที ไม่ต้องรีเฟรช
+  function grantAccess(token) {
+    localStorage.setItem("ec_token", token);
+    clearPending();
+    isPremiumUser = true;
+    renderBadge();
+    closeGateModal();
+    closeRestoreModal();
+    updateStatus();
+    alert(t("alert_pay_done"));
+  }
+ 
+  // ขอสิทธิ์จากรหัสการชำระเงินที่เก็บไว้ (รอได้นานสุด 3 นาทีกรณี PromptPay ยังยืนยันไม่เสร็จ)
   async function claimPaidSession() {
     const params = new URLSearchParams(location.search);
-    const urlSid = params.get("session_id");
-    if (urlSid) {
-      try { localStorage.setItem("ec_pending_session", urlSid); } catch (e) {}
+    if (params.get("canceled")) {
+      clearPending();
       history.replaceState(null, "", location.pathname);
     }
-    let sid = null;
-    try { sid = localStorage.getItem("ec_pending_session"); } catch (e) {}
-    if (!sid) return;
-    if (isPremiumUser) {
-      localStorage.removeItem("ec_pending_session");
-      return;
+    const urlSid = params.get("session_id");
+    if (urlSid) {
+      setPending(urlSid);
+      history.replaceState(null, "", location.pathname);
     }
+    const sid = getPending();
+    if (!sid) return false;
+    if (isPremiumUser) {
+      clearPending();
+      return true;
+    }
+    if (claiming) return false;
  
+    claiming = true;
     $("file-status").textContent = t("pay_verifying");
+    const deadline = Date.now() + 3 * 60 * 1000;
     try {
-      const { ok, status, data } = await postJSON("/api/claim", { session_id: sid });
-      if (ok && data.token) {
-        localStorage.setItem("ec_token", data.token);
-        localStorage.removeItem("ec_pending_session");
-        await verifyPremium();
-        alert(t("alert_pay_done"));
-      } else {
-        if (status === 400 || status === 410) localStorage.removeItem("ec_pending_session");
+      for (;;) {
+        const { ok, status, data } = await postJSON("/api/claim", { session_id: sid });
+        if (ok && data.token) {
+          grantAccess(data.token);
+          return true;
+        }
+        if (status === 402 && Date.now() < deadline) {
+          await sleep(3000); // ยังไม่ชำระ/ยังยืนยันไม่เสร็จ: รอแล้วลองใหม่
+          continue;
+        }
+        if (status === 402 && pendingAgeMs() > 30 * 60 * 1000) {
+          clearPending(); // ค้างนานเกินไป ถือว่าไม่ได้ชำระ ไม่ต้องรบกวนผู้ใช้
+          return false;
+        }
+        if (status === 400 || status === 410) clearPending();
         alert(t("alert_pay_unverified") + " [" + status + ": " + (data.error || "error") + "]");
+        return false;
       }
     } catch (e) {
       alert(t("alert_pay_unverified") + " [network]");
+      return false;
+    } finally {
+      claiming = false;
+      updateStatus();
     }
-    updateStatus();
   }
  
   async function startCheckout() {
@@ -157,7 +224,7 @@
     try {
       const { ok, data } = await postJSON("/api/create-checkout", {});
       if (ok && data.url) {
-        alert(t("pay_redirecting"));
+        if (data.id) setPending(data.id); // จำรหัสไว้ก่อนไปหน้าจ่ายเงิน ปลดล็อกได้แม้ไม่ได้ถูกพากลับมาโดยอัตโนมัติ
         location.href = data.url;
         return;
       }
@@ -451,13 +518,45 @@
     }, 1000);
   }
  
-  // กู้สิทธิ์สำหรับคนที่จ่ายแล้วแต่ยังไม่ได้ป้าย PRO: กรอกรหัส Checkout session (cs_live_...)
-  async function restoreAccess() {
-    const sid = (prompt(t("restore_prompt")) || "").trim();
-    if (!sid) return;
-    try { localStorage.setItem("ec_pending_session", sid); } catch (e) {}
-    await claimPaidSession();
-    if (isPremiumUser) closeGateModal();
+  // กู้สิทธิ์ด้วยตนเอง: อีเมลที่ใช้จ่าย + เลขที่ใบเสร็จจาก Stripe (หรือรหัส cs_/pi_)
+  function openRestoreModal() {
+    closeGateModal();
+    $("restore-msg").textContent = "";
+    $("restore-modal").style.display = "flex";
+  }
+  function closeRestoreModal() { $("restore-modal").style.display = "none"; }
+ 
+  async function submitRestore() {
+    const email = $("restore-email").value.trim();
+    const ref = $("restore-receipt").value.trim();
+    const msg = $("restore-msg");
+    const btn = $("restore-submit-btn");
+    msg.textContent = "";
+ 
+    const isId = /^(cs|pi)_/.test(ref);
+    if (!ref || (!isId && !email)) {
+      msg.textContent = t("restore_need_fields");
+      return;
+    }
+    btn.disabled = true;
+    try {
+      const body = isId ? { session_id: ref } : { email, receipt: ref };
+      const { ok, status, data } = await postJSON("/api/claim", body);
+      if (ok && data.token) {
+        grantAccess(data.token);
+      } else if (status === 404 || status === 400) {
+        msg.textContent = t("restore_not_found");
+      } else if (status === 429) {
+        msg.textContent = t("restore_too_many");
+      } else if (status === 410) {
+        msg.textContent = t("restore_expired");
+      } else {
+        msg.textContent = t("restore_error") + " [" + status + ": " + (data.error || "error") + "]";
+      }
+    } catch (e) {
+      msg.textContent = t("restore_error") + " [network]";
+    }
+    btn.disabled = false;
   }
  
   /* ---------- Init ---------- */
@@ -475,7 +574,13 @@
  
     $("lang-toggle").addEventListener("change", (e) => changeLanguage(e.target.value));
     $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal("tool"); });
-    $("restore-btn").addEventListener("click", restoreAccess);
+    $("restore-btn").addEventListener("click", openRestoreModal);
+    $("restore-submit-btn").addEventListener("click", submitRestore);
+    $("restore-cancel-btn").addEventListener("click", closeRestoreModal);
+    // กลับมาที่แท็บหลังจ่ายเงิน (เช่น จ่ายผ่านแอปธนาคารแล้วสลับกลับ) ให้ตรวจสิทธิ์ทันที
+    document.addEventListener("visibilitychange", () => {
+      if (!document.hidden && getPending() && !isPremiumUser) claimPaidSession();
+    });
     $("close-modal-btn").addEventListener("click", closeGateModal);
     $("pay-btn").addEventListener("click", startCheckout);
     $("watch-ad-btn").addEventListener("click", startRewardedAd);
