@@ -1,6 +1,7 @@
 const { sign, readBody } = require("../lib/token");
  
-const PASS_DAYS = 30;
+// อายุสิทธิ์ (วัน) ค่าเริ่มต้น 30 ตั้ง PASS_DAYS ใน Vercel ชั่วคราวเพื่อทดสอบการหมดอายุ (เช่น 0.01 ≈ 14 นาที) แล้วลบออกทุกครั้ง
+const PASS_DAYS = Number(process.env.PASS_DAYS) > 0 ? Number(process.env.PASS_DAYS) : 30;
 const STRIPE = "https://api.stripe.com/v1/checkout/sessions";
  
 // จำกัดการลองเดา (best-effort: serverless อาจรีเซ็ตเมื่อ instance ใหม่)
@@ -93,7 +94,7 @@ module.exports = async (req, res) => {
     if (!s || s.payment_status !== "paid") {
       return res.status(402).json({ error: "not_paid" });
     }
-    const exp = s.created + PASS_DAYS * 86400;
+    const exp = Math.floor(s.created + PASS_DAYS * 86400);
     if (exp * 1000 < Date.now()) return res.status(410).json({ error: "expired" });
  
     const token = sign({ sid: s.id, exp });
