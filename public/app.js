@@ -13,6 +13,8 @@
   let selectedFiles = [];
   let userCountry = "TH";
   let busy = false;
+  let premiumExp = 0; // เวลาหมดอายุของสิทธิ์ (วินาที epoch)
+  let countdownTimer = null;
  
   const $ = (id) => document.getElementById(id);
   const t = (key) => (translations[currentLang] && translations[currentLang][key]) || key;
@@ -49,6 +51,55 @@
     }
     $("ad-top").style.display = isPremiumUser ? "none" : "block";
     applyLocks();
+    updateProInfo();
+  }
+ 
+  /* ---------- วันหมดอายุ + นับถอยหลัง ---------- */
+ 
+  function formatRemaining(ms) {
+    const total = Math.max(0, Math.floor(ms / 1000));
+    const d = Math.floor(total / 86400);
+    const h = Math.floor((total % 86400) / 3600);
+    const m = Math.floor((total % 3600) / 60);
+    const sec = total % 60;
+    const pad = (n) => String(n).padStart(2, "0");
+    return (d > 0 ? d + " " + t("pro_days") + " " : "") + pad(h) + ":" + pad(m) + ":" + pad(sec);
+  }
+ 
+  function tickCountdown() {
+    const left = premiumExp * 1000 - Date.now();
+    if (left <= 0) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+      $("pro-info").style.display = "none";
+      $("file-status").textContent = t("pro_expired");
+      verifyPremium(); // สิทธิ์หมดอายุ: ตรวจกับเซิร์ฟเวอร์แล้วล็อกเครื่องมือกลับ
+      return;
+    }
+    const when = new Date(premiumExp * 1000).toLocaleString(
+      currentLang === "th" ? "th-TH" : "en-GB",
+      { dateStyle: "medium", timeStyle: "short" }
+    );
+    $("pro-expire").textContent = t("pro_until") + " " + when;
+    $("pro-countdown").textContent = t("pro_left") + " " + formatRemaining(left);
+    $("pro-info").classList.toggle("warn", left < 3 * 86400 * 1000);
+  }
+ 
+  function updateProInfo() {
+    const box = $("pro-info");
+    if (!isPremiumUser || !premiumExp) {
+      box.style.display = "none";
+      if (countdownTimer) {
+        clearInterval(countdownTimer);
+        countdownTimer = null;
+      }
+      return;
+    }
+    box.style.display = "block";
+    tickCountdown();
+    if (premiumExp * 1000 > Date.now() && !countdownTimer) {
+      countdownTimer = setInterval(tickCountdown, 1000);
+    }
   }
  
   function isLocked(tool) {
@@ -139,6 +190,7 @@
   async function verifyPremium() {
     const token = localStorage.getItem("ec_token");
     isPremiumUser = false;
+    premiumExp = 0;
     if (token) {
       let answered = false;
       try {
@@ -146,20 +198,25 @@
         if (ok) {
           answered = true;
           isPremiumUser = !!data.premium;
+          premiumExp = data.premium ? data.exp || readLocalExp() : 0;
           if (!data.premium) localStorage.removeItem("ec_token");
         }
       } catch (e) {}
       // เซิร์ฟเวอร์ตอบไม่ได้ชั่วคราว: เชื่อวันหมดอายุในเครื่อง เพื่อไม่ให้ผู้ที่จ่ายแล้วถูกล็อกเอง
-      if (!answered && readLocalExp() * 1000 > Date.now()) isPremiumUser = true;
+      if (!answered && readLocalExp() * 1000 > Date.now()) {
+        isPremiumUser = true;
+        premiumExp = readLocalExp();
+      }
     }
     renderBadge();
   }
  
   // ได้รับ token จากเซิร์ฟเวอร์: ปลดล็อกทันที ไม่ต้องรีเฟรช
-  function grantAccess(token) {
+  function grantAccess(token, exp) {
     localStorage.setItem("ec_token", token);
     clearPending();
     isPremiumUser = true;
+    premiumExp = exp || readLocalExp();
     renderBadge();
     closeGateModal();
     closeRestoreModal();
@@ -194,7 +251,7 @@
       for (;;) {
         const { ok, status, data } = await postJSON("/api/claim", { session_id: sid });
         if (ok && data.token) {
-          grantAccess(data.token);
+          grantAccess(data.token, data.exp);
           return true;
         }
         if (status === 402 && Date.now() < deadline) {
@@ -543,7 +600,7 @@
       const body = isId ? { session_id: ref } : { email, receipt: ref };
       const { ok, status, data } = await postJSON("/api/claim", body);
       if (ok && data.token) {
-        grantAccess(data.token);
+        grantAccess(data.token, data.exp);
       } else if (status === 404 || status === 400) {
         msg.textContent = t("restore_not_found");
       } else if (status === 429) {
@@ -609,3 +666,4 @@
     verifyPremium().then(claimPaidSession);
   });
 })();
+ 
