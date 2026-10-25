@@ -406,7 +406,7 @@
     checkingOut = true;
     try {
       const { ok, data } = await postJSON("/api/create-checkout", { plan });
-      if (ok && data.url) {
+      if (ok && typeof data.url === "string" && data.url.startsWith("https://checkout.stripe.com/")) {
         if (data.id) setPending(data.id); // จำรหัสไว้ก่อนไปหน้าจ่ายเงิน ปลดล็อกได้แม้ไม่ถูกพากลับมาเอง
         location.href = data.url;
         return;

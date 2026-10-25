@@ -1,26 +1,15 @@
 const { sign, readBody } = require("../lib/token");
-const { PLANS } = require("../lib/plans");
+const { PLANS, getPlan } = require("../lib/plans");
+const { limited } = require("../lib/ratelimit");
 
-// อายุสิทธิ์ตามแพ็กเกจที่บันทึกใน metadata ของ Checkout Session (รายการเก่าที่ไม่มี metadata ถือเป็น 30 วัน)
 // ตั้ง PASS_DAYS ใน Vercel ชั่วคราวเพื่อทดสอบการหมดอายุ (เช่น 0.01 ≈ 14 นาที) แล้วลบออกทุกครั้ง
-function daysFor(session) {
+function daysFor(plan) {
   const override = Number(process.env.PASS_DAYS);
   if (override > 0) return override;
-  const plan = session.metadata && session.metadata.plan;
-  return (PLANS[plan] && PLANS[plan].days) || 30;
+  return getPlan(plan).days;
 }
 const STRIPE = "https://api.stripe.com/v1/checkout/sessions";
-
-// จำกัดการลองเดา (best-effort: serverless อาจรีเซ็ตเมื่อ instance ใหม่)
-const attempts = new Map();
-function tooMany(ip) {
-  const now = Date.now();
-  if (attempts.size > 1000) attempts.clear();
-  const recent = (attempts.get(ip) || []).filter((t) => now - t < 10 * 60 * 1000);
-  recent.push(now);
-  attempts.set(ip, recent);
-  return recent.length > 10;
-}
+const LEGACY_MONTH_AMOUNT = 2900; // ใบเสร็จรุ่นแรกที่ไม่มี metadata.plan (ขาย 29 บาท = 30 วัน)
 
 async function stripeGet(url, key) {
   const r = await fetch(url, { headers: { Authorization: "Bearer " + key } });
@@ -65,6 +54,15 @@ async function findByEmailAndReceipt(email, receipt, key) {
   return null;
 }
 
+// แพ็กเกจที่ถูกต้องของใบเสร็จนี้ หรือ null ถ้าไม่ใช่ของเว็บเรา
+function planOf(s) {
+  if (s.currency !== "thb") return null;
+  const named = s.metadata && s.metadata.plan;
+  if (getPlan(named)) return named;
+  if (!named && s.amount_total === LEGACY_MONTH_AMOUNT) return "month";
+  return null;
+}
+
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
@@ -82,16 +80,20 @@ module.exports = async (req, res) => {
 
     if (typeof body.session_id === "string") {
       const id = body.session_id.trim();
-      if (!/^(cs|pi)_[A-Za-z0-9_]+$/.test(id)) return res.status(400).json({ error: "bad_session" });
+      if (!/^(cs|pi)_[A-Za-z0-9_]{8,200}$/.test(id)) return res.status(400).json({ error: "bad_session" });
+      // หน้าเว็บถามซ้ำทุก 3 วินาทีระหว่างรอ PromptPay จึงให้โควตากว้างกว่าแบบกรอกอีเมล
+      if (limited(req, "claim-sid", 150, 10 * 60 * 1000)) return res.status(429).json({ error: "too_many_attempts" });
       s = await findById(id, key);
     } else if (typeof body.email === "string" && typeof body.receipt === "string") {
       const email = body.email.trim();
       const digits = body.receipt.replace(/\D/g, "");
-      if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || digits.length < 8) {
+      if (
+        email.length > 254 || body.receipt.length > 40 ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || digits.length < 8
+      ) {
         return res.status(400).json({ error: "bad_input" });
       }
-      const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
-      if (tooMany(ip)) return res.status(429).json({ error: "too_many_attempts" });
+      if (limited(req, "claim-email", 10, 10 * 60 * 1000)) return res.status(429).json({ error: "too_many_attempts" });
       s = await findByEmailAndReceipt(email, body.receipt, key);
       if (!s) return res.status(404).json({ error: "not_found" });
     } else {
@@ -101,10 +103,13 @@ module.exports = async (req, res) => {
     if (!s || s.payment_status !== "paid") {
       return res.status(402).json({ error: "not_paid" });
     }
-    const exp = Math.floor(s.created + daysFor(s) * 86400);
+    const plan = planOf(s);
+    // 400 เพื่อให้หน้าเว็บเลิกถามซ้ำ (ไม่ใช่ใบเสร็จของแพ็กเกจเรา)
+    if (!plan) return res.status(400).json({ error: "unknown_plan" });
+
+    const exp = Math.floor(s.created + daysFor(plan) * 86400);
     if (exp * 1000 < Date.now()) return res.status(410).json({ error: "expired" });
 
-    const plan = (s.metadata && s.metadata.plan) || "month";
     const token = sign({ sid: s.id, exp, plan });
     return res.status(200).json({ token, exp, plan });
   } catch (e) {

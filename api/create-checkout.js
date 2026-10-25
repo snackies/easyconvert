@@ -1,10 +1,24 @@
 const { readBody } = require("../lib/token");
-const { PLANS } = require("../lib/plans");
+const { getPlan } = require("../lib/plans");
+const { limited } = require("../lib/ratelimit");
+
+// ที่อยู่เว็บสำหรับพากลับหลังจ่ายเงิน: ตั้ง SITE_ORIGIN ใน Vercel ได้ (เช่น https://example.com)
+// ถ้าไม่ตั้ง จะใช้โดเมนที่รับคำขอ แต่ต้องมีรูปแบบชื่อโดเมนปกติเท่านั้น
+function siteOrigin(req) {
+  const fixed = process.env.SITE_ORIGIN;
+  if (fixed && /^https:\/\/[a-z0-9.-]+(:\d+)?$/i.test(fixed)) return fixed;
+  const host = String(req.headers["x-forwarded-host"] || req.headers.host || "").split(",")[0].trim();
+  if (!/^[a-z0-9.-]+(:\d+)?$/i.test(host)) return null;
+  return "https://" + host;
+}
 
 // สร้าง Stripe Checkout Session (ใช้ REST ตรง ๆ ไม่ต้องติดตั้ง SDK)
 // วิธีชำระเงิน (PromptPay / บัตร) ตั้งที่ Stripe Dashboard > Settings > Payment methods
 module.exports = async (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });
+
+  if (limited(req, "checkout", 20, 10 * 60 * 1000)) return res.status(429).json({ error: "too_many_requests" });
 
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
@@ -12,12 +26,13 @@ module.exports = async (req, res) => {
     return res.status(500).json({ error: "stripe_not_configured" });
   }
 
-  const { plan = "month" } = readBody(req);
-  const cfg = PLANS[plan];
+  const body = readBody(req);
+  const plan = body.plan === undefined ? "month" : body.plan;
+  const cfg = getPlan(plan);
   if (!cfg || cfg.legacy) return res.status(400).json({ error: "bad_plan" });
 
-  const host = req.headers["x-forwarded-host"] || req.headers.host;
-  const origin = `https://${host}`;
+  const origin = siteOrigin(req);
+  if (!origin) return res.status(400).json({ error: "bad_host" });
 
   const p = new URLSearchParams();
   p.append("mode", "payment");
