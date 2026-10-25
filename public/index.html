@@ -3,102 +3,233 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EasyConvert - All-in-One Secure Document Utility</title>
+    <meta name="description" content="ลดขนาด PDF ใส่ลายน้ำสำเนาบัตรประชาชน รวม แยก แปลงไฟล์ ทำในเบราว์เซอร์ของคุณ ไฟล์ไม่ถูกอัปโหลด">
+    <title>EasyConvert | เครื่องมือ PDF และรูปภาพ ไฟล์ไม่ออกจากเครื่องคุณ</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- ไลบรารี (ปักเวอร์ชันชัดเจน) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#2340b8">
+    <!-- ไลบรารีทั้งหมดอยู่ในเว็บเราเอง (public/vendor) ไม่โหลดจากภายนอก -->
+    <script src="vendor/pdf-lib.min.js" defer></script>
+    <script src="vendor/pdf.js" defer></script>
+    <script src="vendor/jszip.min.js" defer></script>
     <script src="translations.js" defer></script>
     <script src="app.js" defer></script>
+    <script src="esign.js" defer></script>
+    <script src="docx.js" defer></script>
 </head>
 <body>
 
-<div class="app-card">
-    <div class="header-bar">
-        <div class="logo">🌐 EasyConvert</div>
-        <div class="right-header">
-            <select id="lang-toggle" class="lang-select">
-                <option value="th">🇹🇭 TH</option>
-                <option value="en">🇺🇸 EN</option>
-            </select>
-            <button id="user-badge" class="badge upgrade" data-i18n="btn_upgrade">👑 อัปเกรดพรีเมียม (Upgrade)</button>
-        </div>
+<header class="top">
+    <a class="brand" href="/"><span class="brand-mark">E</span>EasyConvert</a>
+    <div class="top-right">
+        <select id="lang-toggle" class="lang-select" aria-label="Language">
+            <option value="th">TH</option>
+            <option value="en">EN</option>
+        </select>
+        <button id="user-badge" class="badge" type="button" data-i18n="btn_upgrade">อัปเกรดพรีเมียม</button>
     </div>
+</header>
 
-    <div id="pro-info" class="pro-info" style="display: none;">
+<main>
+    <section class="hero">
+        <div>
+            <h1 data-i18n="hero_title">จัดการไฟล์ PDF และรูปภาพ ในเครื่องคุณเอง</h1>
+            <p class="hero-sub" data-i18n="hero_sub">ไฟล์ไม่ถูกอัปโหลดไปที่ไหน เหมาะกับเอกสารสำคัญอย่างสำเนาบัตรประชาชนและสัญญา</p>
+            <ul class="hero-points">
+                <li data-i18n="point_1">ไฟล์ไม่ออกจากเครื่อง</li>
+                <li data-i18n="point_2">ตรวจสอบเองได้</li>
+                <li data-i18n="point_3">ไม่ต้องสมัครสมาชิก</li>
+            </ul>
+            <a class="link-verify" href="privacy.html" data-i18n="verify_link">ดูวิธีตรวจสอบเองใน 3 นาที</a>
+        </div>
+        <div class="stamp" aria-hidden="true">
+            <b data-i18n="stamp_1">ประมวลผล</b>
+            <span data-i18n="stamp_2">ในเครื่องคุณ</span>
+        </div>
+    </section>
+
+    <div id="pro-info" class="pro-info is-hidden">
         <span id="pro-expire"></span>
-        <span class="pro-sep">·</span>
         <strong id="pro-countdown"></strong>
     </div>
 
-    <div class="nav-tabs">
-        <button id="tab-img2pdf" class="tab-btn active" data-tool="img2pdf" data-i18n="tab_img2pdf">📷 Image to PDF</button>
-        <button id="tab-pdf2img" class="tab-btn" data-tool="pdf2img" data-i18n="tab_pdf2img">📄 PDF to Image</button>
-        <button id="tab-merge" class="tab-btn" data-tool="merge" data-i18n="tab_merge">🧩 Merge PDF</button>
-        <button id="tab-split" class="tab-btn" data-tool="split" data-i18n="tab_split">✂️ Split PDF</button>
-        <button id="tab-compress" class="tab-btn" data-tool="compress" data-i18n="tab_compress">🗜️ PDF Compressor</button>
-        <button id="tab-pdf2word" class="tab-btn" data-tool="pdf2word" data-i18n="tab_pdf2word">📝 PDF to Word</button>
-        <button id="tab-pdf2excel" class="tab-btn" data-tool="pdf2excel" data-i18n="tab_pdf2excel">📊 PDF to Excel</button>
-    </div>
+    <nav id="tool-grid" class="tool-grid" aria-label="Tools"></nav>
 
-    <div id="ad-top" class="ad-placeholder" data-i18n="ad_text">📢 [พื้นที่โฆษณา]</div>
-
-    <div class="drop-zone" id="drop-area">
-        <span style="font-size: 45px;">📥</span>
-        <p id="drop-text" data-i18n="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>คลิกเพื่อเลือกไฟล์</strong></p>
-        <input type="file" id="file-input" style="display: none;" accept="image/*" multiple>
-    </div>
-
-    <div id="split-options" class="dynamic-options">
-        <div class="input-group">
-            <label id="label-split" for="page-range" data-i18n="split_label">🎯 ระบุช่วงหน้า (เช่น 1-3, 5, 7-10):</label>
-            <input type="text" id="page-range" placeholder="1-3, 5">
+    <section class="card" aria-labelledby="tool-title">
+        <div class="ws-head">
+            <h2 id="tool-title"></h2>
+            <p id="tool-desc"></p>
         </div>
-    </div>
 
-    <div id="file-status" style="margin-top: 15px; font-size: 13px; font-weight: bold; color: #333;" data-i18n="no_file">ยังไม่ได้เลือกไฟล์</div>
+        <div class="drop-zone" id="drop-area" tabindex="0" role="button">
+            <span class="drop-icon" aria-hidden="true">📥</span>
+            <p data-i18n-html="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>แตะเพื่อเลือกไฟล์</strong></p>
+            <p class="hint" id="drop-types"></p>
+            <input type="file" id="file-input" hidden multiple>
+        </div>
+        <ul id="file-list" class="file-list"></ul>
 
-    <button class="btn-main" id="process-btn" data-i18n="btn_process">🚀 เริ่มประมวลผลไฟล์ทันที</button>
+        <div id="opt-split" class="options is-hidden" data-tool="split">
+            <label for="page-range" data-i18n="split_label">ระบุหน้าที่ต้องการเก็บ</label>
+            <input type="text" id="page-range" placeholder="1-3, 5, 7-10" inputmode="text">
+        </div>
 
-    <div class="privacy-seal" data-i18n="privacy_seal">🔒 ไฟล์ประมวลผลในเครื่องคุณ ไม่มีการอัปโหลด</div>
+        <div id="opt-compress" class="options is-hidden" data-tool="compress">
+            <label for="compress-level" data-i18n="compress_label">ระดับการบีบอัด</label>
+            <select id="compress-level">
+                <option value="light" data-i18n="compress_light">เบา: คงข้อความไว้ ไฟล์เล็กลงเล็กน้อย</option>
+                <option value="medium" data-i18n="compress_medium" selected>กลาง: แปลงเป็นภาพ คุณภาพดี</option>
+                <option value="strong" data-i18n="compress_strong">แรง: แปลงเป็นภาพ ไฟล์เล็กที่สุด</option>
+            </select>
+            <p class="note" data-i18n="compress_note">ระดับกลางและแรกจะแปลงหน้าเป็นภาพ ข้อความจะเลือกหรือค้นหาไม่ได้</p>
+        </div>
 
-    <div style="margin-top: 25px; font-size: 11px; color: #666; border-top: 1px dashed #ccc; padding-top: 10px;">
-        <span data-i18n="affiliate_text">💡 </span><a href="#" style="color: var(--primary); text-decoration: none; font-weight: bold;" data-i18n="affiliate_link">🛒 ลิงก์แนะนำ</a>
-    </div>
-</div>
+        <div id="opt-shrink" class="options is-hidden" data-tool="shrink">
+            <label for="target-size" data-i18n="shrink_label">ย่อให้ไม่เกินขนาด</label>
+            <div class="row">
+                <input type="number" id="target-size" min="10" step="10" value="200" inputmode="numeric">
+                <select id="target-unit" aria-label="Unit">
+                    <option value="kb">KB</option>
+                    <option value="mb">MB</option>
+                </select>
+            </div>
+            <p class="note" data-i18n="shrink_note">ใช้กับเว็บที่จำกัดขนาดไฟล์ เช่น สมัครงานหรือยื่นเอกสาร ระบบลดคุณภาพทีละน้อยจนได้ขนาดตามต้องการ</p>
+        </div>
+
+        <div id="opt-watermark" class="options is-hidden" data-tool="watermark">
+            <label for="wm-text" data-i18n="wm_label">ข้อความลายน้ำ</label>
+            <input type="text" id="wm-text" maxlength="80">
+            <div class="chips" id="wm-chips"></div>
+            <label for="wm-opacity" class="mt12"><span data-i18n="wm_opacity">ความเข้ม</span> <span id="wm-opacity-val"></span></label>
+            <input type="range" id="wm-opacity" min="10" max="70" step="5" value="35">
+            <p class="note" data-i18n="wm_note">ผลลัพธ์เป็นภาพ ลายน้ำจึงลบออกจากไฟล์ไม่ได้ ควรระบุผู้รับและวัตถุประสงค์ทุกครั้ง</p>
+        </div>
+
+        <div id="opt-sign" class="options is-hidden" data-tool="sign">
+            <p id="sg-need" class="note" data-i18n="sg_need_file"></p>
+            <div id="sg-work" class="is-hidden">
+                <h3 class="sg-h" data-i18n="sg_step1"></h3>
+                <div class="seg" role="tablist">
+                    <button type="button" class="seg-btn active" role="tab" data-sg-tab="draw" data-i18n="sg_tab_draw"></button>
+                    <button type="button" class="seg-btn" role="tab" data-sg-tab="type" data-i18n="sg_tab_type"></button>
+                    <button type="button" class="seg-btn" role="tab" data-sg-tab="image" data-i18n="sg_tab_image"></button>
+                    <button type="button" class="seg-btn" role="tab" data-sg-tab="text" data-i18n="sg_tab_text"></button>
+                </div>
+
+                <div class="sg-panel" data-sg-panel="draw">
+                    <canvas id="sg-pad" class="sg-pad" width="720" height="240" aria-label="Signature pad"></canvas>
+                    <div class="sg-row"><span class="note" data-i18n="sg_draw_hint"></span><button type="button" class="mini" id="sg-pad-clear" data-i18n="sg_clear"></button></div>
+                </div>
+                <div class="sg-panel is-hidden" data-sg-panel="type">
+                    <input type="text" id="sg-type-text" maxlength="40" autocomplete="off">
+                    <div class="chips">
+                        <button type="button" class="chip active" data-sg-font="sriracha" data-i18n="sg_font_1"></button>
+                        <button type="button" class="chip" data-sg-font="charmonman" data-i18n="sg_font_2"></button>
+                    </div>
+                </div>
+                <div class="sg-panel is-hidden" data-sg-panel="image">
+                    <label for="sg-img-input" data-i18n="sg_img_pick"></label>
+                    <input type="file" id="sg-img-input" accept="image/*">
+                    <label class="chk"><input type="checkbox" id="sg-img-clean" checked> <span data-i18n="sg_img_clean"></span></label>
+                </div>
+                <div class="sg-panel is-hidden" data-sg-panel="text">
+                    <input type="text" id="sg-text-input" maxlength="60" autocomplete="off">
+                    <div class="chips"><button type="button" class="chip" id="sg-today" data-i18n="sg_today"></button></div>
+                </div>
+
+                <div class="sg-ink" id="sg-ink-row">
+                    <span data-i18n="sg_ink"></span>
+                    <button type="button" class="chip active" data-sg-ink="#1b2f9e" data-i18n="sg_ink_blue"></button>
+                    <button type="button" class="chip" data-sg-ink="#111111" data-i18n="sg_ink_black"></button>
+                </div>
+                <canvas id="sg-preview" class="sg-preview" width="10" height="10" aria-hidden="true"></canvas>
+                <label class="chk"><input type="checkbox" id="sg-remember"> <span data-i18n="sg_remember"></span></label>
+                <div class="chips" id="sg-saved-row">
+                    <button type="button" class="chip" id="sg-saved-use" data-i18n="sg_saved_use"></button>
+                    <button type="button" class="chip" id="sg-saved-del" data-i18n="sg_saved_del"></button>
+                </div>
+                <button type="button" class="btn-pay" id="sg-add" data-i18n="sg_add"></button>
+                <p class="restore-msg" id="sg-msg" role="alert"></p>
+
+                <h3 class="sg-h" data-i18n="sg_step2"></h3>
+                <div class="sg-nav">
+                    <button type="button" class="mini" id="sg-prev" data-i18n="sg_prev"></button>
+                    <span id="sg-pageinfo"></span>
+                    <button type="button" class="mini" id="sg-next" data-i18n="sg_next"></button>
+                </div>
+                <div class="sg-stage" id="sg-stage">
+                    <canvas id="sg-page" class="sg-page"></canvas>
+                    <div id="sg-layer" class="sg-layer"></div>
+                </div>
+                <p class="note" data-i18n="sg_note"></p>
+            </div>
+        </div>
+
+        <div id="trial-info" class="trial-info is-hidden"></div>
+
+        <button class="btn-main" id="process-btn" type="button" data-i18n="btn_process">เริ่มประมวลผล</button>
+        <div class="progress" id="progress" hidden><div id="progress-bar"></div></div>
+        <div id="file-status" class="status" role="status" aria-live="polite"></div>
+
+        <div id="receipt" class="receipt" hidden>
+            <div class="receipt-title" data-i18n="receipt_title">ใบรับรองการประมวลผล</div>
+            <dl>
+                <dt data-i18n="receipt_files">จำนวนไฟล์</dt><dd id="rc-files"></dd>
+                <dt data-i18n="receipt_time">ใช้เวลา</dt><dd id="rc-time"></dd>
+                <dt data-i18n="receipt_net">คำขอส่งข้อมูลออกจากเครื่อง</dt><dd id="rc-net"></dd>
+            </dl>
+            <p class="receipt-note" id="rc-note"></p>
+        </div>
+    </section>
+
+    <section id="pricing" aria-labelledby="pricing-title">
+        <h2 class="section-title" id="pricing-title" data-i18n="pricing_title">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
+        <p class="section-sub" data-i18n="pricing_sub">จ่ายครั้งเดียว ไม่ต่ออายุอัตโนมัติ ใช้ได้ทุกเครื่องมือ ไม่จำกัดจำนวนครั้ง ไฟล์ใหญ่ได้ และไม่มีโฆษณา</p>
+        <div class="plans" id="plans-main"></div>
+    </section>
+
+    <section class="faq" aria-label="FAQ">
+        <h2 class="section-title" data-i18n="faq_title">คำถามที่พบบ่อย</h2>
+        <details><summary data-i18n="faq_q1"></summary><p data-i18n="faq_a1"></p></details>
+        <details><summary data-i18n="faq_q2"></summary><p data-i18n="faq_a2"></p></details>
+        <details><summary data-i18n="faq_q3"></summary><p data-i18n="faq_a3"></p></details>
+        <details><summary data-i18n="faq_q4"></summary><p data-i18n="faq_a4"></p></details>
+        <details><summary data-i18n="faq_q5"></summary><p data-i18n="faq_a5"></p></details>
+    </section>
+</main>
+
+<footer class="foot">
+    <span>EasyConvert</span>
+    <nav>
+        <a href="privacy.html" data-i18n="foot_privacy">ความเป็นส่วนตัวและวิธีตรวจสอบ</a>
+        <a href="terms.html" data-i18n="foot_terms">เงื่อนไขการใช้งาน</a>
+        <a href="mailto:YOUR_EMAIL@example.com" data-i18n="foot_contact">ติดต่อเรา</a>
+    </nav>
+</footer>
 
 <div class="modal" id="gate-modal">
-    <div class="modal-content">
-        <h3 data-i18n="modal_title">💎 ปลดล็อกฟีเจอร์พรีเมียม</h3>
-        <p id="modal-desc" data-i18n="modal_desc">ไฟล์ใหญ่เกิน 15 MB หรือเครื่องมือนี้สำหรับสมาชิกพรีเมียม</p>
-
-        <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafafa;">
-            <div style="font-weight: bold; color: #333;" id="price-text">...</div>
-            <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 ชำระเงิน</button>
-        </div>
-
-        <div id="or-text" style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือ -</div>
-        <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที</button>
-        <br>
-        <button class="close-btn" id="restore-btn" data-i18n="restore_link">ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์?</button>
-        <button class="close-btn" id="close-modal-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h3 id="modal-title" data-i18n="modal_title">ปลดล็อกการใช้งานแบบไม่จำกัด</h3>
+        <p id="modal-desc"></p>
+        <div class="plans plans-modal" id="plans-modal"></div>
+        <button class="close-btn" id="restore-btn" type="button" data-i18n="restore_link">ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์?</button>
+        <button class="close-btn" id="close-modal-btn" type="button" data-i18n="btn_close">ปิด</button>
     </div>
 </div>
 
 <div class="modal" id="restore-modal">
-    <div class="modal-content">
-        <h3 data-i18n="restore_title">กู้คืนสิทธิ์พรีเมียม</h3>
-        <p data-i18n="restore_desc" style="font-size: 13px; color: #555;">กรอกอีเมลที่ใช้ชำระเงิน และเลขที่ใบเสร็จจากอีเมล Stripe</p>
-        <div class="input-group" style="text-align: left;">
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="restore-title">
+        <h3 id="restore-title" data-i18n="restore_title">กู้คืนสิทธิ์พรีเมียม</h3>
+        <p data-i18n="restore_desc">กรอกอีเมลที่ใช้ชำระเงิน และเลขที่ใบเสร็จจากอีเมลของ Stripe</p>
+        <div class="input-group">
             <label for="restore-email" data-i18n="restore_email">อีเมลที่ใช้ชำระเงิน</label>
             <input type="email" id="restore-email" autocomplete="email" inputmode="email" placeholder="you@example.com">
-            <label for="restore-receipt" data-i18n="restore_receipt" style="margin-top: 8px;">เลขที่ใบเสร็จ (เช่น 1757-4733)</label>
+            <label for="restore-receipt" data-i18n="restore_receipt">เลขที่ใบเสร็จ (เช่น 1757-4733)</label>
             <input type="text" id="restore-receipt" autocomplete="off" placeholder="1757-4733">
         </div>
-        <div id="restore-msg" style="font-size: 12px; color: #c0392b; min-height: 16px; margin-top: 8px;"></div>
-        <button class="btn-pay" id="restore-submit-btn" data-i18n="restore_submit">กู้คืนสิทธิ์</button>
-        <button class="close-btn" id="restore-cancel-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
+        <div id="restore-msg" class="restore-msg" role="alert"></div>
+        <button class="btn-pay" id="restore-submit-btn" type="button" data-i18n="restore_submit">กู้คืนสิทธิ์</button>
+        <button class="close-btn" id="restore-cancel-btn" type="button" data-i18n="btn_close">ปิด</button>
     </div>
 </div>
 

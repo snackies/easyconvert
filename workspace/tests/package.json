@@ -1,0 +1,13 @@
+{
+  "name": "easyconvert-tests",
+  "private": true,
+  "scripts": {
+    "test": "node fixtures.js && node run.js && node run2.js && node run3.js"
+  },
+  "devDependencies": {
+    "playwright": "*",
+    "pdf-lib": "1.17.1",
+    "sharp": "*",
+    "jszip": "3.10.1"
+  }
+}
