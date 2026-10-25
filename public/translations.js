@@ -12,7 +12,7 @@ const translations = {
     stamp_2: "ในเครื่องคุณ",
     tag_new: "ใหม่",
     foot_terms: "เงื่อนไขการใช้งาน",
-
+ 
     tab_sign: "เซ็นเอกสาร", desc_sign: "วาดหรือพิมพ์ลายเซ็น แล้ววางบนเอกสาร PDF ข้อความเดิมยังเลือกและค้นหาได้",
     sg_need_file: "เลือกไฟล์ PDF ก่อน แล้วขั้นตอนเซ็นเอกสารจะปรากฏที่นี่",
     sg_step1: "1. สร้างลายเซ็น หรือข้อความที่จะประทับ",
@@ -42,7 +42,7 @@ const translations = {
     dw_scan: "ไฟล์นี้เป็นภาพสแกน ไม่มีข้อความให้ดึง ต้องใช้ OCR (กำลังพัฒนา)",
     dw_done: "แปลงเป็น Word แล้ว {pages} หน้า {imgs} รูป ตารางซับซ้อนอาจต้องจัดเองใน Word",
     dw_warn: "แต่ไฟล์ต้นฉบับไม่ได้ระบุตัวอักษรไทยบางตัวไว้ {n} ตำแหน่ง (มักเป็นวรรณยุกต์) จึงหายไป กรุณาตรวจทานข้อความ",
-
+ 
     tab_img2pdf: "รูปเป็น PDF", desc_img2pdf: "รวมรูปหลายรูปเป็นไฟล์ PDF เดียว",
     tab_pdf2img: "PDF เป็นรูป", desc_pdf2img: "แปลงทุกหน้าของ PDF เป็นรูป JPG",
     tab_merge: "รวม PDF", desc_merge: "ต่อ PDF หลายไฟล์เป็นไฟล์เดียว",
@@ -52,7 +52,7 @@ const translations = {
     tab_watermark: "ลายน้ำสำเนา", desc_watermark: "ใส่ข้อความกันนำไปใช้ผิดวัตถุประสงค์ เช่น สำเนาบัตรประชาชน",
     tab_pdf2word: "PDF เป็น Word", desc_pdf2word: "แปลงเป็นไฟล์ Word (.docx) คงย่อหน้า ขนาดตัวอักษร ตัวหนา และรูป เหมาะกับเอกสารข้อความ",
     tab_pdf2excel: "PDF เป็น Excel", desc_pdf2excel: "ดึงข้อความจากตารางใน PDF เป็นไฟล์ CSV",
-
+ 
     drop_instruction: "ลากไฟล์มาวางที่นี่ หรือ <strong>แตะเพื่อเลือกไฟล์</strong>",
     drop_types_img: "รองรับไฟล์รูปภาพ (JPG, PNG, WebP ฯลฯ)",
     drop_types_pdf: "รองรับไฟล์ PDF",
@@ -61,7 +61,7 @@ const translations = {
     file_ready_text: "เลือกแล้ว {count} ไฟล์ พร้อมประมวลผล",
     btn_process: "เริ่มประมวลผล",
     remove_file: "เอาไฟล์นี้ออก",
-
+ 
     split_label: "ระบุหน้าที่ต้องการเก็บ (เช่น 1-3, 5, 7-10)",
     compress_label: "ระดับการบีบอัด",
     compress_light: "เบา: คงข้อความไว้ ไฟล์เล็กลงเล็กน้อย",
@@ -76,10 +76,10 @@ const translations = {
     wm_preset_1: "สำเนาเพื่อสมัครงานเท่านั้น ห้ามนำไปใช้อย่างอื่น",
     wm_preset_2: "ใช้ยื่นธนาคารเท่านั้น ห้ามใช้เพื่อการอื่น",
     wm_preset_3: "สำเนาเพื่อ................ เท่านั้น",
-
+ 
     trial_left: "ทดลองฟรีวันนี้: เหลือ {n} จาก {max} ครั้งสำหรับเครื่องมือนี้",
     trial_out: "ใช้ครบ {max} ครั้งของวันนี้แล้วสำหรับเครื่องมือนี้ พรุ่งนี้ได้สิทธิ์ใหม่ หรืออัปเกรดเพื่อใช้ต่อทันที",
-
+ 
     lib_error: "โหลดตัวประมวลผลไม่สำเร็จ โปรดตรวจอินเทอร์เน็ตแล้วรีเฟรชหน้า",
     invalid_size: "กรุณาระบุขนาดเป้าหมายให้ถูกต้อง (อย่างน้อย 10 KB)",
     status_processing: "กำลังประมวลผลบนเครื่องของคุณ...",
@@ -95,7 +95,7 @@ const translations = {
     shrink_fail: "ย่อได้เล็กสุด {to} ยังไม่ถึงขนาดที่ต้องการ ลองเพิ่มขนาดเป้าหมาย",
     compress_no_gain: "ไฟล์นี้บีบอัดแล้วไม่เล็กลง (เดิม {from} ใหม่ {to}) จึงไม่ดาวน์โหลดให้ ลองเลือกระดับแรงขึ้น",
     zip_note: "ได้หลายไฟล์ จึงรวมเป็น ZIP ให้",
-
+ 
     receipt_title: "ใบรับรองการประมวลผล",
     receipt_files: "จำนวนไฟล์",
     receipt_time: "ใช้เวลา",
@@ -104,7 +104,7 @@ const translations = {
     receipt_time_val: "{s} วินาที",
     receipt_ok_note: "บันทึกโดยเบราว์เซอร์ ไม่มีการส่งไฟล์ออกไปยังเซิร์ฟเวอร์ ตรวจสอบเองได้ที่หน้าความเป็นส่วนตัว",
     receipt_warn_note: "พบคำขอส่งข้อมูลระหว่างประมวลผล โปรดตรวจแท็บ Network ของเบราว์เซอร์ และแจ้งเรา (อาจมาจากส่วนขยายเบราว์เซอร์ของคุณ)",
-
+ 
     modal_title: "ปลดล็อกการใช้งานแบบไม่จำกัด",
     modal_desc_size: "ไฟล์ของคุณใหญ่เกิน 15 MB สำหรับการใช้ฟรี เลือกแพ็กเกจเพื่อใช้ต่อ",
     modal_desc_trial: "คุณใช้ครบ 2 ครั้งของวันนี้สำหรับเครื่องมือนี้แล้ว เลือกแพ็กเกจเพื่อใช้ต่อทันที",
@@ -114,10 +114,10 @@ const translations = {
     btn_close: "ปิด",
     ad_countdown: "กำลังรับชมโฆษณา... ({time} วินาที)",
     alert_ad_done: "ขอบคุณที่สนับสนุน ปลดล็อกให้ใช้เพิ่ม 1 ครั้งแล้ว",
-
+ 
     pricing_title: "เลือกแพ็กเกจที่เหมาะกับคุณ",
     pricing_sub: "จ่ายครั้งเดียว ไม่ต่ออายุอัตโนมัติ ใช้ได้ทุกเครื่องมือ ไม่จำกัดจำนวนครั้ง ไฟล์ใหญ่ได้ และไม่มีโฆษณา",
-    plan_day_name: "ทดลอง 1 วัน", plan_day_note: "24 ชั่วโมง เหมาะกับงานเร่งด่วน",
+    plan_week_name: "7 วัน", plan_week_note: "เต็มสัปดาห์ เหมาะกับงานโปรเจกต์",
     plan_month_name: "รายเดือน", plan_month_note: "30 วัน เหมาะกับงานประจำ",
     plan_year_name: "รายปี", plan_year_note: "365 วัน ถูกที่สุดต่อวัน",
     plan_perday: "ประมาณ {x} บาทต่อวัน",
@@ -125,17 +125,17 @@ const translations = {
     plan_popular: "ยอดนิยม",
     plan_cta: "เลือกแพ็กเกจนี้",
     price_fmt: "฿{p}",
-
+ 
     pay_failed: "เริ่มการชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง",
     pay_verifying: "กำลังตรวจสอบการชำระเงิน...",
     alert_pay_done: "ปลดล็อกพรีเมียมเรียบร้อยแล้ว",
     alert_pay_unverified: "ยังตรวจสอบการชำระเงินไม่สำเร็จ หากชำระแล้วโปรดรอสักครู่แล้วรีเฟรช หรือกด กู้คืนสิทธิ์",
-
+ 
     pro_until: "สิทธิ์พรีเมียมถึง",
     pro_left: "เหลือ",
     pro_days: "วัน",
     pro_expired: "สิทธิ์พรีเมียมหมดอายุแล้ว เลือกแพ็กเกจเพื่อใช้งานแบบไม่จำกัดต่อ",
-
+ 
     restore_link: "ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์?",
     restore_title: "กู้คืนสิทธิ์พรีเมียม",
     restore_desc: "กรอกอีเมลที่ใช้ชำระเงิน และเลขที่ใบเสร็จจากอีเมลของ Stripe (หัวข้อ Receipt) หรือวางรหัสที่ขึ้นต้นด้วย cs_live_ หรือ pi_ ในช่องใบเสร็จ",
@@ -147,7 +147,7 @@ const translations = {
     restore_too_many: "ลองหลายครั้งเกินไป กรุณารอสักครู่แล้วลองใหม่",
     restore_expired: "สิทธิ์จากการชำระเงินรายการนี้หมดอายุแล้ว",
     restore_error: "เกิดข้อผิดพลาด กรุณาลองใหม่",
-
+ 
     faq_title: "คำถามที่พบบ่อย",
     faq_q1: "ไฟล์ของฉันปลอดภัยแค่ไหน?",
     faq_a1: "ไฟล์ถูกประมวลผลในเบราว์เซอร์ของคุณ ไม่ถูกส่งไปเซิร์ฟเวอร์ใดของเรา และเว็บสั่งให้เบราว์เซอร์บล็อกการส่งข้อมูลไปยังเว็บอื่น คุณทดสอบเองได้ด้วยโหมดเครื่องบิน ดูขั้นตอนที่หน้าความเป็นส่วนตัว",
@@ -175,7 +175,7 @@ const translations = {
     stamp_2: "on your device",
     tag_new: "New",
     foot_terms: "Terms of use",
-
+ 
     tab_sign: "Sign PDF", desc_sign: "Draw or type a signature and place it on your PDF. Existing text stays selectable and searchable.",
     sg_need_file: "Choose a PDF first and the signing steps will appear here.",
     sg_step1: "1. Create a signature or text to stamp",
@@ -205,7 +205,7 @@ const translations = {
     dw_scan: "This looks like a scanned image with no text to extract. OCR is needed (coming later).",
     dw_done: "Converted to Word: {pages} page(s), {imgs} image(s). Complex tables may need manual fixing in Word.",
     dw_warn: "The source file does not identify {n} Thai character(s) (usually tone marks), so they are missing. Please proofread.",
-
+ 
     tab_img2pdf: "Images to PDF", desc_img2pdf: "Combine several images into one PDF",
     tab_pdf2img: "PDF to images", desc_pdf2img: "Turn every PDF page into a JPG",
     tab_merge: "Merge PDF", desc_merge: "Join several PDFs into one file",
@@ -215,7 +215,7 @@ const translations = {
     tab_watermark: "Copy watermark", desc_watermark: "Add a purpose text so copies can't be misused, e.g. ID cards",
     tab_pdf2word: "PDF to Word", desc_pdf2word: "Convert to a real Word (.docx) file keeping paragraphs, font sizes, bold and images. Best for text documents.",
     tab_pdf2excel: "PDF to Excel", desc_pdf2excel: "Extract table text from a PDF as CSV",
-
+ 
     drop_instruction: "Drag & drop files here or <strong>tap to choose</strong>",
     drop_types_img: "Image files (JPG, PNG, WebP, etc.)",
     drop_types_pdf: "PDF files",
@@ -224,7 +224,7 @@ const translations = {
     file_ready_text: "{count} file(s) selected and ready",
     btn_process: "Start processing",
     remove_file: "Remove this file",
-
+ 
     split_label: "Pages to keep (e.g. 1-3, 5, 7-10)",
     compress_label: "Compression level",
     compress_light: "Light: keeps text, slightly smaller",
@@ -239,10 +239,10 @@ const translations = {
     wm_preset_1: "Copy for job application only. Not for any other use.",
     wm_preset_2: "For bank submission only. Not for any other use.",
     wm_preset_3: "Copy for ................ only",
-
+ 
     trial_left: "Free trial today: {n} of {max} uses left for this tool",
     trial_out: "You've used all {max} free runs of this tool today. Come back tomorrow or upgrade to continue now.",
-
+ 
     lib_error: "The processing library failed to load. Check your connection and refresh.",
     invalid_size: "Please enter a valid target size (at least 10 KB)",
     status_processing: "Processing on your device...",
@@ -258,7 +258,7 @@ const translations = {
     shrink_fail: "Smallest possible is {to}, still above your target. Try a larger target size.",
     compress_no_gain: "This file didn't get smaller (before {from}, after {to}), so nothing was downloaded. Try a stronger level.",
     zip_note: "Multiple files, so they were bundled into a ZIP.",
-
+ 
     receipt_title: "Processing receipt",
     receipt_files: "Files",
     receipt_time: "Time taken",
@@ -267,7 +267,7 @@ const translations = {
     receipt_time_val: "{s} s",
     receipt_ok_note: "Recorded by your browser. No file was sent to any server. Verify it yourself on the privacy page.",
     receipt_warn_note: "Data requests were detected during processing. Check your browser's Network tab and tell us (they may come from a browser extension).",
-
+ 
     modal_title: "Unlock unlimited use",
     modal_desc_size: "Your file is over the 15 MB free limit. Choose a plan to continue.",
     modal_desc_trial: "You've used today's 2 free runs of this tool. Choose a plan to continue now.",
@@ -277,10 +277,10 @@ const translations = {
     btn_close: "Close",
     ad_countdown: "Watching ad... ({time}s)",
     alert_ad_done: "Thanks for the support. One extra use unlocked.",
-
+ 
     pricing_title: "Pick the plan that suits you",
     pricing_sub: "One-time payment, no auto-renewal. All tools, unlimited runs, large files and no ads.",
-    plan_day_name: "1-day trial", plan_day_note: "24 hours, great for urgent jobs",
+    plan_week_name: "7 days", plan_week_note: "A full week, great for a project",
     plan_month_name: "Monthly", plan_month_note: "30 days, for regular work",
     plan_year_name: "Yearly", plan_year_note: "365 days, lowest cost per day",
     plan_perday: "about {x} THB per day",
@@ -288,17 +288,17 @@ const translations = {
     plan_popular: "Popular",
     plan_cta: "Choose this plan",
     price_fmt: "฿{p}",
-
+ 
     pay_failed: "Could not start checkout. Please try again.",
     pay_verifying: "Verifying your payment...",
     alert_pay_done: "Premium unlocked.",
     alert_pay_unverified: "Payment could not be verified yet. If you've paid, wait a moment and refresh, or use Restore access.",
-
+ 
     pro_until: "Premium until",
     pro_left: "Time left",
     pro_days: "d",
     pro_expired: "Your Premium access has expired. Pick a plan to keep using everything.",
-
+ 
     restore_link: "Already paid but not unlocked?",
     restore_title: "Restore Premium access",
     restore_desc: "Enter the email you paid with and the receipt number from Stripe's receipt email, or paste an ID starting with cs_live_ or pi_ in the receipt field.",
@@ -310,7 +310,7 @@ const translations = {
     restore_too_many: "Too many attempts. Please wait a moment and try again.",
     restore_expired: "This payment's access period has expired.",
     restore_error: "Something went wrong. Please try again.",
-
+ 
     faq_title: "Frequently asked questions",
     faq_q1: "How safe are my files?",
     faq_a1: "Files are processed in your browser and never sent to any server of ours. The site also tells your browser to block sending data to other websites. Test it yourself in airplane mode; see the privacy page.",

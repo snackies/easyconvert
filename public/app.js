@@ -1,19 +1,19 @@
 (function () {
   "use strict";
-
+ 
   // จุดเชื่อมให้โมดูลเครื่องมือแยกไฟล์ (esign.js, docx.js) ลงทะเบียนตัวเองได้
   const EC = (window.EC = window.EC || {});
   EC.tools = EC.tools || {};
   EC.langListeners = EC.langListeners || [];
-
+ 
   /* ============ ค่าคงที่ ============ */
   const FREE_LIMIT_MB = 15;
   const TRIAL_PER_DAY = 2; // ทดลองฟรีต่อเครื่องมือต่อวัน
-  const PRICES = { day: 15, month: 29, year: 199 }; // ต้องตรงกับ lib/plans.js
-  const PLAN_DAYS = { day: 1, month: 30, year: 365 };
+  const PRICES = { week: 19, month: 29, year: 199 }; // ต้องตรงกับ lib/plans.js
+  const PLAN_DAYS = { week: 7, month: 30, year: 365 };
   const MAX_AREA = 12e6; // จำกัดพื้นที่ canvas (พิกเซล) กันเครื่องมือถือแรมเต็ม
   const FONT = '"Plex Thai","Sukhumvit Set","Thonburi","Noto Sans Thai","Leelawadee UI",sans-serif';
-
+ 
   const TOOLS = [
     { id: "img2pdf", icon: "📷", kinds: ["image"], multi: true },
     { id: "pdf2img", icon: "🖼️", kinds: ["pdf"] },
@@ -27,7 +27,7 @@
     { id: "pdf2excel", icon: "📊", kinds: ["pdf"] },
   ];
   const toolById = (id) => TOOLS.find((x) => x.id === id);
-
+ 
   /* ============ สถานะ ============ */
   let currentLang = "th";
   let isPremiumUser = false;
@@ -39,7 +39,7 @@
   let checkingOut = false;
   let countdownTimer = null;
   let wmTouched = false;
-
+ 
   const $ = (id) => document.getElementById(id);
   const t = (key) => (translations[currentLang] && translations[currentLang][key]) || key;
   const fmt = (s, v) => s.replace(/\{(\w+)\}/g, (m, k) => (k in v ? v[k] : m));
@@ -57,7 +57,7 @@
   function needLib(name) {
     if (typeof window[name] === "undefined") throw new Error(t("lib_error"));
   }
-
+ 
   /* ============ ภาษา / หน้าจอ ============ */
   function changeLanguage(lang) {
     currentLang = lang;
@@ -80,7 +80,7 @@
     updateTrialInfo();
     updateStatus();
   }
-
+ 
   function renderBadge() {
     const badge = $("user-badge");
     badge.textContent = isPremiumUser ? t("premium_tier") : t("btn_upgrade");
@@ -88,7 +88,7 @@
     updateProInfo();
     updateTrialInfo();
   }
-
+ 
   function renderToolHeader() {
     $("tool-title").textContent = t("tab_" + activeTool);
     $("tool-desc").textContent = t("desc_" + activeTool);
@@ -96,24 +96,24 @@
     const key = kinds.length === 2 ? "drop_types_both" : kinds[0] === "image" ? "drop_types_img" : "drop_types_pdf";
     $("drop-types").textContent = t(key);
   }
-
+ 
   function updateStatus() {
     $("file-status").textContent = selectedFiles.length
       ? fmt(t("file_ready_text"), { count: selectedFiles.length })
       : t("no_file");
   }
-
+ 
   function renderPlans() {
     ["plans-main", "plans-modal"].forEach((boxId) => {
       const box = $(boxId);
       box.innerHTML = "";
-      ["day", "month", "year"].forEach((plan) => {
+      ["week", "month", "year"].forEach((plan) => {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "plan" + (plan === "year" ? " best" : "");
         b.setAttribute("data-plan", plan);
         const tag = plan === "year" ? t("plan_best") : plan === "month" ? t("plan_popular") : "";
-        const perDay = plan === "day" ? "" :
+        const perDay =
           '<span class="pnote">' + fmt(t("plan_perday"), { x: (PRICES[plan] / PLAN_DAYS[plan]).toFixed(2) }) + "</span>";
         b.innerHTML =
           (tag ? '<span class="ptag">' + tag + "</span>" : "") +
@@ -125,7 +125,7 @@
       });
     });
   }
-
+ 
   function renderWmChips() {
     const box = $("wm-chips");
     box.innerHTML = "";
@@ -142,7 +142,7 @@
     });
     if (!wmTouched) $("wm-text").value = t("wm_preset_1");
   }
-
+ 
   function buildToolGrid() {
     const grid = $("tool-grid");
     TOOLS.forEach((tool) => {
@@ -158,14 +158,14 @@
       grid.appendChild(b);
     });
   }
-
+ 
   function notifyFiles() {
     const h = EC.tools[activeTool];
     if (h && h.onFiles) {
       try { h.onFiles(selectedFiles.slice()); } catch (e) { console.error(e); }
     }
   }
-
+ 
   function selectTool(id) {
     const prev = EC.tools[activeTool];
     if (prev && prev.onLeave) { try { prev.onLeave(); } catch (e) { console.error(e); } }
@@ -192,14 +192,14 @@
     updateStatus();
     notifyFiles();
   }
-
+ 
   /* ============ ไฟล์ที่เลือก ============ */
   function fileKind(file) {
     if (file.type && file.type.startsWith("image/")) return "image";
     if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) return "pdf";
     return null;
   }
-
+ 
   function setFiles(fileList) {
     const files = Array.from(fileList);
     if (!files.length) return;
@@ -218,7 +218,7 @@
     updateStatus();
     notifyFiles();
   }
-
+ 
   function renderFileList() {
     const list = $("file-list");
     list.innerHTML = "";
@@ -246,7 +246,7 @@
       list.appendChild(li);
     });
   }
-
+ 
   /* ============ สิทธิ์ทดลอง 2 ครั้ง/วัน ============ */
   function todayStr() {
     const d = new Date();
@@ -285,11 +285,11 @@
     if (trialLeft(activeTool) <= 0) return "trial";
     return null;
   }
-
+ 
   /* ============ Premium: ตรวจสิทธิ์ / ชำระเงิน / กู้คืน ============ */
   const PENDING_KEY = "ec_pending_session";
   const PENDING_AT_KEY = "ec_pending_at";
-
+ 
   async function postJSON(url, body) {
     const res = await fetch(url, {
       method: "POST",
@@ -301,7 +301,7 @@
   function setPending(id) { store.set(PENDING_KEY, id); store.set(PENDING_AT_KEY, String(Date.now())); }
   function clearPending() { store.del(PENDING_KEY); store.del(PENDING_AT_KEY); }
   function pendingAgeMs() { return Date.now() - Number(store.get(PENDING_AT_KEY) || 0); }
-
+ 
   function readLocalExp() {
     try {
       const tok = store.get("ec_token");
@@ -312,7 +312,7 @@
       return 0;
     }
   }
-
+ 
   async function verifyPremium() {
     const token = store.get("ec_token");
     isPremiumUser = false;
@@ -336,7 +336,7 @@
     }
     renderBadge();
   }
-
+ 
   function grantAccess(token, exp) {
     store.set("ec_token", token);
     clearPending();
@@ -348,7 +348,7 @@
     updateStatus();
     alert(t("alert_pay_done"));
   }
-
+ 
   async function claimPaidSession() {
     const params = new URLSearchParams(location.search);
     if (params.get("canceled")) {
@@ -367,7 +367,7 @@
       return true;
     }
     if (claiming) return false;
-
+ 
     claiming = true;
     $("file-status").textContent = t("pay_verifying");
     const deadline = Date.now() + 3 * 60 * 1000;
@@ -398,7 +398,7 @@
       updateStatus();
     }
   }
-
+ 
   async function startCheckout(plan) {
     if (checkingOut || !PRICES[plan]) return;
     checkingOut = true;
@@ -415,14 +415,14 @@
     }
     checkingOut = false;
   }
-
+ 
   function openRestoreModal() {
     closeGateModal();
     $("restore-msg").textContent = "";
     $("restore-modal").style.display = "flex";
   }
   function closeRestoreModal() { $("restore-modal").style.display = "none"; }
-
+ 
   async function submitRestore() {
     const email = $("restore-email").value.trim();
     const ref = $("restore-receipt").value.trim();
@@ -448,7 +448,7 @@
     }
     btn.disabled = false;
   }
-
+ 
   /* ============ วันหมดอายุ + นับถอยหลัง ============ */
   function formatRemaining(ms) {
     const total = Math.max(0, Math.floor(ms / 1000));
@@ -491,7 +491,7 @@
     tickCountdown();
     if (premiumExp * 1000 > Date.now() && !countdownTimer) countdownTimer = setInterval(tickCountdown, 1000);
   }
-
+ 
   /* ============ ตัวช่วยประมวลผลภาพ/PDF ============ */
   function limitScale(w, h) {
     const a = w * h;
@@ -518,14 +518,14 @@
     return c;
   }
   function freeCanvas(c) { c.width = c.height = 0; }
-
+ 
   function friendlyError(err) {
     const m = (err && (err.name + " " + err.message)) || "";
     if (/PasswordException|encrypted|password/i.test(m)) return t("err_encrypted");
     if (/InvalidPDF|Invalid PDF|No PDF header|Failed to parse/i.test(m)) return t("err_bad_pdf");
     return (err && err.message) || String(err);
   }
-
+ 
   async function loadPdfJs(file) {
     needLib("pdfjsLib");
     return pdfjsLib.getDocument({
@@ -547,7 +547,7 @@
     await page.render({ canvasContext: ctx, viewport: vp }).promise;
     return c;
   }
-
+ 
   function setProgress(frac) {
     $("progress").hidden = false;
     $("progress-bar").style.width = Math.round(Math.min(1, Math.max(0, frac)) * 100) + "%";
@@ -557,7 +557,7 @@
       fmt(t("progress_page"), { i, n }) + (round ? fmt(t("progress_round"), { r: round }) : "");
     setProgress((i - 1) / n);
   }
-
+ 
   // แปลงทุกหน้า PDF เป็นภาพ JPEG แล้วประกอบเป็น PDF ใหม่ (ใช้ทั้งลดขนาด ย่อให้ได้ขนาด และลายน้ำ)
   async function rasterizePdf(file, opts) {
     needLib("PDFLib");
@@ -578,11 +578,11 @@
     }
     return out.save();
   }
-
+ 
   async function ensureFont() {
     try { if (document.fonts && document.fonts.load) await document.fonts.load('700 24px "Plex Thai"', "ก A"); } catch (e) {}
   }
-
+ 
   function drawWatermark(ctx, w, h, text, opacity) {
     const label = (text || "").trim() || "COPY";
     const size = Math.max(14, Math.round(Math.min(w, h) / 20));
@@ -610,7 +610,7 @@
     }
     ctx.restore();
   }
-
+ 
   // ค้นหาคุณภาพ/ขนาดที่ทำให้ไฟล์ไม่เกินเป้าหมาย encode(scale, quality) -> { size, data }
   async function searchToTarget(encode, target) {
     const scales = [1, 0.85, 0.7, 0.55, 0.42, 0.32, 0.25];
@@ -632,7 +632,7 @@
     }
     return { size: smallest.size, data: smallest.data, ok: false };
   }
-
+ 
   function parseRanges(input, max) {
     const out = [];
     for (const part of input.split(",")) {
@@ -648,7 +648,7 @@
     if (!out.length) throw new Error(t("invalid_range"));
     return out;
   }
-
+ 
   const baseName = (name) => name.replace(/\.[^.]+$/, "");
   function download(data, filename, type) {
     const blob = data instanceof Blob ? data : new Blob([data], { type });
@@ -676,7 +676,7 @@
     });
     download(await zip.generateAsync({ type: "blob" }), zipName, "application/zip");
   }
-
+ 
   /* ============ เครื่องมือแต่ละตัว ============ */
   async function needsReencode(file) {
     // รูปจากกล้องมักมี EXIF หมุนภาพ ถ้าฝัง JPEG ตรง ๆ ภาพจะตะแคง จึงตรวจแล้ววาดผ่าน canvas
@@ -699,7 +699,7 @@
     freeCanvas(c);
     return blob.arrayBuffer();
   }
-
+ 
   async function imagesToPdf() {
     needLib("PDFLib");
     const pdfDoc = await PDFLib.PDFDocument.create();
@@ -715,7 +715,7 @@
     }
     download(await pdfDoc.save(), "EasyConvert_Images.pdf", "application/pdf");
   }
-
+ 
   async function pdfToImages(file) {
     const pdf = await loadPdfJs(file);
     const results = [];
@@ -729,7 +729,7 @@
     }
     await deliver(results, baseName(file.name) + "_pages.zip");
   }
-
+ 
   async function mergePdfs() {
     needLib("PDFLib");
     const merged = await PDFLib.PDFDocument.create();
@@ -741,7 +741,7 @@
     }
     download(await merged.save(), "EasyConvert_Merged.pdf", "application/pdf");
   }
-
+ 
   async function splitPdf(file) {
     needLib("PDFLib");
     const src = await PDFLib.PDFDocument.load(await file.arrayBuffer());
@@ -750,7 +750,7 @@
     (await out.copyPages(src, indices)).forEach((p) => out.addPage(p));
     download(await out.save(), baseName(file.name) + "_pages.pdf", "application/pdf");
   }
-
+ 
   async function compressPdf(file) {
     needLib("PDFLib");
     const level = $("compress-level").value;
@@ -768,14 +768,14 @@
     download(bytes, baseName(file.name) + "_compressed.pdf", "application/pdf");
     return { message: fmt(t("shrink_ok"), { from: fmtSize(file.size), to: fmtSize(bytes.length) }) };
   }
-
+ 
   function readTargetBytes() {
     const v = parseFloat($("target-size").value);
     const bytes = v * ($("target-unit").value === "mb" ? 1048576 : 1024);
     if (!(v > 0) || bytes < 10 * 1024) throw new Error(t("invalid_size"));
     return Math.round(bytes);
   }
-
+ 
   async function shrinkImage(file, target) {
     const bmp = await createImageBitmap(file);
     const encode = async (scale, q) => {
@@ -788,7 +788,7 @@
     if (bmp.close) bmp.close();
     return res;
   }
-
+ 
   async function shrinkPdf(file, target) {
     const combos = [[1.6, 0.75], [1.3, 0.6], [1.0, 0.5], [0.8, 0.4], [0.65, 0.32]];
     let best = null;
@@ -800,7 +800,7 @@
     }
     return { ...best, ok: false };
   }
-
+ 
   async function shrinkFiles() {
     const target = readTargetBytes();
     const results = [];
@@ -831,7 +831,7 @@
     if (results.length === 1) return { message: fmt(t("shrink_ok"), { from: fmtSize(first.from), to: fmtSize(first.to) }) };
     return { message: t("status_done") + " " + t("zip_note") };
   }
-
+ 
   async function watermarkFiles() {
     await ensureFont();
     const mark = { text: $("wm-text").value, opacity: parseInt($("wm-opacity").value, 10) / 100 };
@@ -858,7 +858,7 @@
     }
     await deliver(results, "EasyConvert_watermark.zip");
   }
-
+ 
   async function extractPageTexts(file) {
     const pdf = await loadPdfJs(file);
     const pages = [];
@@ -868,7 +868,7 @@
     }
     return pages;
   }
-
+ 
   async function pdfToExcel(file) {
     const pages = await extractPageTexts(file);
     const quote = (s) => '"' + s.replace(/"/g, '""') + '"';
@@ -888,7 +888,7 @@
     }
     download(new TextEncoder().encode("\uFEFF" + lines.join("\r\n")), baseName(file.name) + "_EasyConvert.csv", "text/csv;charset=utf-8");
   }
-
+ 
   async function runTool(tool) {
     const file = selectedFiles[0];
     const plugin = EC.tools[tool];
@@ -904,7 +904,7 @@
       case "pdf2excel": return pdfToExcel(file);
     }
   }
-
+ 
   /* ============ สั่งประมวลผล + ใบรับรอง ============ */
   function countDataRequests() {
     // นับคำขอส่งข้อมูล (fetch/XHR/beacon) จากบันทึกของเบราว์เซอร์เอง ไม่ใช่ตัวนับของโค้ดเรา
@@ -922,7 +922,7 @@
     $("receipt").className = "receipt" + (netDiff === 0 ? "" : " warn");
     $("receipt").hidden = false;
   }
-
+ 
   async function executeFileProcessing() {
     if (busy) return;
     if (!selectedFiles.length) {
@@ -935,7 +935,7 @@
       openGateModal(reason);
       return;
     }
-
+ 
     busy = true;
     const btn = $("process-btn");
     btn.disabled = true;
@@ -962,7 +962,7 @@
       updateTrialInfo();
     }
   }
-
+ 
   /* ============ Modal ============ */
   function openGateModal(mode) {
     const key = mode === "size" ? "modal_desc_size" : mode === "trial" ? "modal_desc_trial" : "modal_desc_upgrade";
@@ -970,7 +970,7 @@
     $("gate-modal").style.display = "flex";
   }
   function closeGateModal() { $("gate-modal").style.display = "none"; }
-
+ 
   /* ============ เริ่มทำงาน ============ */
   document.addEventListener("DOMContentLoaded", function () {
     if (performance.setResourceTimingBufferSize) performance.setResourceTimingBufferSize(2000);
@@ -979,7 +979,7 @@
     }
     const savedLang = store.get("ec_lang");
     currentLang = savedLang === "en" ? "en" : "th";
-
+ 
     buildToolGrid();
     $("lang-toggle").addEventListener("change", (e) => changeLanguage(e.target.value));
     $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal("upgrade"); });
@@ -991,7 +991,7 @@
     $("wm-text").addEventListener("input", () => { wmTouched = true; });
     $("wm-opacity").addEventListener("input", () => { $("wm-opacity-val").textContent = $("wm-opacity").value + "%"; });
     $("wm-opacity-val").textContent = $("wm-opacity").value + "%";
-
+ 
     document.addEventListener("click", (e) => {
       const btn = e.target && e.target.closest ? e.target.closest("[data-plan]") : null;
       if (btn) startCheckout(btn.getAttribute("data-plan"));
@@ -1007,7 +1007,7 @@
       if (!document.hidden && store.get(PENDING_KEY) && !isPremiumUser) claimPaidSession();
     });
     window.addEventListener("pageshow", (e) => { if (e.persisted) checkingOut = false; });
-
+ 
     const input = $("file-input");
     const drop = $("drop-area");
     input.addEventListener("change", (e) => { setFiles(e.target.files); input.value = ""; });
@@ -1016,7 +1016,7 @@
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("over"));
     drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); setFiles(e.dataTransfer.files); });
-
+ 
     selectTool("img2pdf");
     changeLanguage(currentLang);
     verifyPremium().then(claimPaidSession);
@@ -1024,15 +1024,16 @@
       navigator.serviceWorker.register("sw.js").catch(function () {});
     }
   });
-
+ 
   Object.assign(EC, {
     $, t, fmt, store, fmtSize, baseName, download, needLib, newCanvas, canvasToBlob, freeCanvas,
     loadPdfJs, renderPageToCanvas, setProgress, setPageStatus, ensureFont, friendlyError,
     getLang: () => currentLang, FONT, MAX_AREA,
   });
-
+ 
   // ตะขอสำหรับทดสอบอัตโนมัติ (ไม่ทำงานในเว็บจริงเว้นแต่ตั้งค่า __EC_TEST__ เอง)
   if (typeof window !== "undefined" && window.__EC_TEST__) {
     window.__EC_TEST__.api = { searchToTarget, parseRanges, drawWatermark, formatRemaining, trialLeft, trialConsume, gateReason, startCheckout, selectTool, setFiles, executeFileProcessing, fmtSize };
   }
 })();
+ 
