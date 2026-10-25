@@ -11,16 +11,19 @@ module.exports = async (req, res) => {
   if (!key) return res.status(500).json({ error: "stripe_not_configured" });
  
   const { session_id } = readBody(req);
-  if (typeof session_id !== "string" || !/^cs_[A-Za-z0-9_]+$/.test(session_id)) {
+  if (typeof session_id !== "string" || !/^(cs|pi)_[A-Za-z0-9_]+$/.test(session_id)) {
     return res.status(400).json({ error: "bad_session" });
   }
  
   try {
-    const r = await fetch(
-      "https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(session_id),
-      { headers: { Authorization: "Bearer " + key } }
-    );
-    const s = await r.json();
+    // รับได้ทั้งรหัส Checkout session (cs_...) และรหัส Payment (pi_...) จากอีเมล/Dashboard ของ Stripe
+    const isPayment = session_id.startsWith("pi_");
+    const url = isPayment
+      ? "https://api.stripe.com/v1/checkout/sessions?limit=1&payment_intent=" + encodeURIComponent(session_id)
+      : "https://api.stripe.com/v1/checkout/sessions/" + encodeURIComponent(session_id);
+    const r = await fetch(url, { headers: { Authorization: "Bearer " + key } });
+    let s = await r.json();
+    if (isPayment) s = (s.data && s.data[0]) || {};
     if (!r.ok || s.payment_status !== "paid") {
       console.error("claim: not paid", r.status, s.payment_status, s.error && s.error.message);
       return res.status(402).json({ error: "not_paid" });
@@ -36,3 +39,4 @@ module.exports = async (req, res) => {
     return res.status(502).json({ error: code });
   }
 };
+ 
