@@ -160,7 +160,7 @@ const translations = {
     faq_a4: "กดปุ่ม ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์ แล้วกรอกอีเมลที่ใช้จ่ายกับเลขที่ใบเสร็จจากอีเมลของ Stripe สิทธิ์ผูกกับเบราว์เซอร์ ถ้าเปลี่ยนเครื่องหรือล้างข้อมูลเว็บ ให้กู้คืนด้วยวิธีเดียวกัน",
     faq_q5: "PDF เป็น Word และ Excel ทำได้ดีแค่ไหน?",
     faq_a5: "PDF เป็น Word ได้ไฟล์ .docx จริง คงย่อหน้า ขนาดตัวอักษร ตัวหนา และรูป เหมาะกับเอกสารข้อความ แต่ตารางซับซ้อนและหลายคอลัมน์อาจเพี้ยน ส่วน PDF เป็น Excel ดึงเฉพาะข้อความเป็นแถว ทั้งสองยังไม่รองรับ PDF ที่เป็นภาพสแกน (ยังไม่มี OCR)",
-    foot_copy: "© 2026 EasyConvert สงวนลิขสิทธิ์",
+    foot_copy: "© 2026 EasyConvert",
     foot_privacy: "ความเป็นส่วนตัวและวิธีตรวจสอบ",
     foot_contact: "ติดต่อเรา"
   },
@@ -325,7 +325,7 @@ const translations = {
     faq_a4: "Press Already paid but not unlocked, then enter the email you paid with and the receipt number from Stripe's email. Access is tied to your browser, so after switching devices or clearing site data, restore it the same way.",
     faq_q5: "How good are PDF to Word and Excel?",
     faq_a5: "PDF to Word produces a real .docx keeping paragraphs, font sizes, bold and images. It suits text documents, but complex tables and multi-column layouts may shift. PDF to Excel extracts text rows only. Neither supports scanned PDFs yet (no OCR).",
-    foot_copy: "© 2026 EasyConvert. All rights reserved.",
+    foot_copy: "© 2026 EasyConvert",
     foot_privacy: "Privacy and how to verify",
     foot_contact: "Contact"
   }
