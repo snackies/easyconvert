@@ -14,7 +14,7 @@ module.exports = async (req, res) => {
 
   const { plan = "month" } = readBody(req);
   const cfg = PLANS[plan];
-  if (!cfg) return res.status(400).json({ error: "bad_plan" });
+  if (!cfg || cfg.legacy) return res.status(400).json({ error: "bad_plan" });
 
   const host = req.headers["x-forwarded-host"] || req.headers.host;
   const origin = `https://${host}`;

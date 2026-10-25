@@ -79,6 +79,7 @@ button { cursor: pointer; }
 .hero-sub { margin: 0 0 14px; max-width: 52ch; color: var(--muted); font-size: 17px; }
 .hero-points { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 0 0 12px; padding: 0; list-style: none; }
 .hero-points li { padding: 5px 12px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-weight: 600; font-size: 14px; }
+.hero-points li.pt-free { background: var(--gold-soft); color: var(--gold-ink); }
 .link-verify { font-weight: 600; font-size: 15px; }
 .stamp {
   display: grid; place-content: center; width: 132px; height: 132px; border-radius: 50%;

@@ -269,6 +269,8 @@
   }
   function updateTrialInfo() {
     const el = $("trial-info");
+    const freeChip = $("pt-free");
+    if (freeChip) freeChip.style.display = isPremiumUser ? "none" : "";
     if (isPremiumUser) {
       el.style.display = "none";
       return;
