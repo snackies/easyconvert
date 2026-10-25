@@ -80,5 +80,21 @@
     </div>
 </div>
 
+<div class="modal" id="restore-modal">
+    <div class="modal-content">
+        <h3 data-i18n="restore_title">กู้คืนสิทธิ์พรีเมียม</h3>
+        <p data-i18n="restore_desc" style="font-size: 13px; color: #555;">กรอกอีเมลที่ใช้ชำระเงิน และเลขที่ใบเสร็จจากอีเมล Stripe</p>
+        <div class="input-group" style="text-align: left;">
+            <label for="restore-email" data-i18n="restore_email">อีเมลที่ใช้ชำระเงิน</label>
+            <input type="email" id="restore-email" autocomplete="email" inputmode="email" placeholder="you@example.com">
+            <label for="restore-receipt" data-i18n="restore_receipt" style="margin-top: 8px;">เลขที่ใบเสร็จ (เช่น 1757-4733)</label>
+            <input type="text" id="restore-receipt" autocomplete="off" placeholder="1757-4733">
+        </div>
+        <div id="restore-msg" style="font-size: 12px; color: #c0392b; min-height: 16px; margin-top: 8px;"></div>
+        <button class="btn-pay" id="restore-submit-btn" data-i18n="restore_submit">กู้คืนสิทธิ์</button>
+        <button class="close-btn" id="restore-cancel-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
+    </div>
+</div>
+
 </body>
 </html>
