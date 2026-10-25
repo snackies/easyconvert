@@ -2,6 +2,7 @@
   "use strict";
  
   const FREE_LIMIT_MB = 15;
+  const FREE_TOOLS = ["img2pdf"]; // เครื่องมืออื่นล็อกไว้สำหรับสมาชิกพรีเมียม
   const IMAGE_TOOLS = ["img2pdf"];
   const MULTI_TOOLS = ["img2pdf", "merge"];
  
@@ -47,6 +48,33 @@
       badge.className = "badge upgrade";
     }
     $("ad-top").style.display = isPremiumUser ? "none" : "block";
+    applyLocks();
+  }
+ 
+  function isLocked(tool) {
+    return !isPremiumUser && !FREE_TOOLS.includes(tool);
+  }
+ 
+  function applyLocks() {
+    document.querySelectorAll(".tab-btn").forEach((btn) => {
+      btn.classList.toggle("locked", isLocked(btn.getAttribute("data-tool")));
+    });
+    // ถ้าสิทธิ์หมดอายุขณะเปิดเครื่องมือที่ล็อกอยู่ ให้กลับไปเครื่องมือฟรี
+    if (isLocked(activeTool)) {
+      const free = document.querySelector('.tab-btn[data-tool="' + FREE_TOOLS[0] + '"]');
+      if (free) selectTool(free, true);
+    }
+  }
+ 
+  function selectTool(button, silent) {
+    activeTool = button.getAttribute("data-tool");
+    document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
+    button.classList.add("active");
+    selectedFiles = [];
+    $("file-input").value = "";
+    applyToolUI();
+    if (silent) updateStatus();
+    else $("file-status").textContent = t("switch_text") + button.textContent.replace("🔒", "").trim();
   }
  
   function updatePricingDisplay() {
@@ -181,7 +209,7 @@
  
   function needsGate(totalMB) {
     if (isPremiumUser || oneTimePass) return false;
-    return totalMB > FREE_LIMIT_MB || activeTool !== "img2pdf";
+    return totalMB > FREE_LIMIT_MB || isLocked(activeTool);
   }
  
   async function executeFileProcessing() {
@@ -192,7 +220,7 @@
     }
     const totalMB = selectedFiles.reduce((s, f) => s + f.size, 0) / 1024 / 1024;
     if (needsGate(totalMB)) {
-      openGateModal();
+      openGateModal(isLocked(activeTool) ? "tool" : "size");
       return;
     }
  
@@ -391,7 +419,14 @@
  
   /* ---------- Modal / rewarded ad ---------- */
  
-  function openGateModal() { $("gate-modal").style.display = "flex"; }
+  // mode "size": ไฟล์ใหญ่ (จ่ายหรือดูโฆษณาได้) / mode "tool": เครื่องมือล็อก (จ่ายเท่านั้น)
+  function openGateModal(mode) {
+    const toolOnly = mode === "tool";
+    $("modal-desc").textContent = t(toolOnly ? "modal_desc_upgrade" : "modal_desc");
+    $("or-text").style.display = toolOnly ? "none" : "block";
+    $("watch-ad-btn").style.display = toolOnly ? "none" : "block";
+    $("gate-modal").style.display = "flex";
+  }
   function closeGateModal() { $("gate-modal").style.display = "none"; }
  
   function startRewardedAd() {
@@ -416,23 +451,31 @@
     }, 1000);
   }
  
+  // กู้สิทธิ์สำหรับคนที่จ่ายแล้วแต่ยังไม่ได้ป้าย PRO: กรอกรหัส Checkout session (cs_live_...)
+  async function restoreAccess() {
+    const sid = (prompt(t("restore_prompt")) || "").trim();
+    if (!sid) return;
+    try { localStorage.setItem("ec_pending_session", sid); } catch (e) {}
+    await claimPaidSession();
+    if (isPremiumUser) closeGateModal();
+  }
+ 
   /* ---------- Init ---------- */
  
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".tab-btn").forEach((button) => {
       button.addEventListener("click", function () {
-        activeTool = this.getAttribute("data-tool");
-        document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
-        this.classList.add("active");
-        selectedFiles = [];
-        $("file-input").value = "";
-        applyToolUI();
-        $("file-status").textContent = t("switch_text") + this.textContent;
+        if (isLocked(this.getAttribute("data-tool"))) {
+          openGateModal("tool"); // เครื่องมือล็อก: ไม่สลับเครื่องมือ แสดงหน้าอัปเกรด
+          return;
+        }
+        selectTool(this, false);
       });
     });
  
     $("lang-toggle").addEventListener("change", (e) => changeLanguage(e.target.value));
-    $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal(); });
+    $("user-badge").addEventListener("click", () => { if (!isPremiumUser) openGateModal("tool"); });
+    $("restore-btn").addEventListener("click", restoreAccess);
     $("close-modal-btn").addEventListener("click", closeGateModal);
     $("pay-btn").addEventListener("click", startCheckout);
     $("watch-ad-btn").addEventListener("click", startRewardedAd);
