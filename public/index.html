@@ -65,16 +65,17 @@
 <div class="modal" id="gate-modal">
     <div class="modal-content">
         <h3 data-i18n="modal_title">💎 ปลดล็อกฟีเจอร์พรีเมียม</h3>
-        <p data-i18n="modal_desc">ไฟล์ใหญ่เกิน 15 MB หรือเครื่องมือนี้สำหรับสมาชิกพรีเมียม</p>
+        <p id="modal-desc" data-i18n="modal_desc">ไฟล์ใหญ่เกิน 15 MB หรือเครื่องมือนี้สำหรับสมาชิกพรีเมียม</p>
 
         <div style="border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; background: #fafafa;">
             <div style="font-weight: bold; color: #333;" id="price-text">...</div>
             <button class="btn-pay" id="pay-btn" data-i18n="btn_pay">💳 ชำระเงิน</button>
         </div>
 
-        <div style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือ -</div>
+        <div id="or-text" style="font-size: 12px; color: #777;" data-i18n="or_text">- หรือ -</div>
         <button class="btn-watch" id="watch-ad-btn" data-i18n="btn_watch">📺 ดูโฆษณา 15 วินาที</button>
         <br>
+        <button class="close-btn" id="restore-btn" data-i18n="restore_link">ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์?</button>
         <button class="close-btn" id="close-modal-btn" data-i18n="btn_close">ปิดหน้าต่าง</button>
     </div>
 </div>
