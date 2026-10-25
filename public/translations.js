@@ -23,6 +23,9 @@ const translations = {
         or_text: "- หรือเลือกใช้ฟรีแลกเวลา -",
         btn_watch: "📺 ดูโฆษณา 15 วินาที เพื่อใช้งานฟรี 1 ครั้ง",
         btn_close: "ปิดหน้าต่าง",
+        modal_desc_upgrade: "เครื่องมือนี้สำหรับสมาชิกพรีเมียมเท่านั้น อัปเกรดเพื่อใช้งานทุกเครื่องมือและไฟล์ขนาดใหญ่",
+        restore_link: "ชำระเงินแล้วแต่ยังไม่ได้สิทธิ์?",
+        restore_prompt: "วางรหัส Checkout session (ขึ้นต้นด้วย cs_live_) จากหน้ารายการชำระเงินใน Stripe หรืออีเมลใบเสร็จ:",
         alert_select_file: "กรุณาเลือกไฟล์ก่อนครับ!",
         alert_wrong_type: "ประเภทไฟล์ไม่ตรงกับเครื่องมือที่เลือก",
         status_processing: "⏳ กำลังประมวลผลไฟล์บนเครื่องของคุณ...",
@@ -64,6 +67,9 @@ const translations = {
         or_text: "- Or stay free and support us -",
         btn_watch: "📺 Watch 15s Ad to Unlock Free 1-Time Use",
         btn_close: "Close Window",
+        modal_desc_upgrade: "This tool is for Premium members only. Upgrade to unlock every tool and large files.",
+        restore_link: "Already paid but not unlocked?",
+        restore_prompt: "Paste your Checkout session ID (starts with cs_live_) from your Stripe payment record:",
         alert_select_file: "Please select a file first!",
         alert_wrong_type: "File type doesn't match the selected tool",
         status_processing: "⏳ Processing files locally in your browser...",
@@ -82,3 +88,4 @@ const translations = {
         ad_countdown: "⏳ Watching Ad... ({time}s)"
     }
 };
+ 
