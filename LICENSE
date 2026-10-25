@@ -1,0 +1,44 @@
+EasyConvert - Proprietary License
+
+Copyright (c) 2026 EasyConvert. All rights reserved.
+
+This repository and its contents (the "Software") are the proprietary
+property of the copyright holder. No license or right is granted to use,
+copy, modify, merge, publish, distribute, sublicense, sell, host, or create
+derivative works of the Software, except as stated below.
+
+Permitted:
+  1. Viewing the code that your browser receives when you use the website,
+     in order to verify how it behaves and to verify its privacy claims.
+  2. Using the website itself under its Terms of use (terms.html).
+
+Not permitted without prior written permission from the copyright holder:
+  - Copying, republishing or hosting the Software or its pages as a
+    competing or derivative service.
+  - Reselling or sharing paid access codes, tokens or receipts.
+  - Circumventing the usage limits or the payment system, or sending
+    automated bulk requests to the payment and entitlement endpoints.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR ITS USE.
+
+Third-party components
+----------------------
+The components below are NOT covered by the notice above. They remain under
+their own licenses, and the license notices are kept in the files themselves
+under public/vendor/:
+
+  - pdf-lib ................ MIT License (bundles tslib, Apache License 2.0)
+  - PDF.js (Mozilla) ....... Apache License 2.0
+  - JSZip .................. dual-licensed MIT or GPLv3 (used under MIT)
+  - IBM Plex Sans Thai, Sriracha, Charmonman fonts
+                             SIL Open Font License 1.1
+                             (see public/vendor/fonts/OFL*.txt)
+  - Standard PDF fonts ..... see public/vendor/standard_fonts/LICENSE_FOXIT
+                             and LICENSE_LIBERATION
+  - CMap files (if present)  see public/vendor/cmaps/LICENSE
+
+Contact: utility.strategic@gmail.com
