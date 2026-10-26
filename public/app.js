@@ -9,7 +9,7 @@
   /* ============ ค่าคงที่ ============ */
   const FREE_LIMIT_MB = 15;
   const TRIAL_PER_DAY = 2; // ทดลองฟรีต่อเครื่องมือต่อวัน
-  const PRICES = { week: 19, month: 29, year: 199 }; // ต้องตรงกับ lib/plans.js
+  const PRICES = { week: 19, month: 49, year: 399 }; // ต้องตรงกับ lib/plans.js
   const PLAN_DAYS = { week: 7, month: 30, year: 365 };
   const MAX_AREA = 12e6; // จำกัดพื้นที่ canvas (พิกเซล) กันเครื่องมือถือแรมเต็ม
   const FONT = '"Plex Thai","Sukhumvit Set","Thonburi","Noto Sans Thai","Leelawadee UI",sans-serif';
