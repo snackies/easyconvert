@@ -3,7 +3,7 @@ const http = require("http"), fs = require("fs"), path = require("path");
 const ROOT = path.join(__dirname, "..", "public");
 const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "vercel.json"), "utf8"));
 const base = {}; cfg.headers[0].headers.forEach(h => base[h.key] = h.value);
-const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".woff": "font/woff", ".svg": "image/svg+xml", ".pfb": "application/octet-stream", ".bcmap": "application/octet-stream", ".ttf": "font/ttf" };
+const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".woff": "font/woff", ".svg": "image/svg+xml", ".png": "image/png", ".pfb": "application/octet-stream", ".bcmap": "application/octet-stream", ".ttf": "font/ttf" };
 module.exports = function start(port, apiHandler) {
   const srv = http.createServer((req, res) => {
     const u = decodeURIComponent(req.url.split("?")[0]);

@@ -1,0 +1,73 @@
+/* หน้าคู่มือการใช้งาน (guide.html) ใช้ตัวแปรสีจาก styles.css จึงรองรับโหมดมืด/สว่างอัตโนมัติ */
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+.guide-page { background: var(--paper); color: var(--ink); font-family: var(--font); }
+.g-top, .g-wrap { width: min(100% - 32px, 820px); margin-inline: auto; }
+.g-top { display: flex; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 16px 0 4px; }
+.g-top-right { display: flex; align-items: center; gap: 10px; }
+.g-wrap { padding-bottom: 56px; }
+
+.g-hero h1 { margin: 18px 0 8px; font-size: clamp(28px, 6vw, 40px); line-height: 1.2; font-weight: 800; text-wrap: balance; }
+.g-hero .lead { margin: 0 0 14px; color: var(--muted); font-size: 17px; max-width: 56ch; }
+.g-pills { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 0; padding: 0; list-style: none; }
+.g-pills li { padding: 5px 12px; border-radius: 999px; background: var(--ok-soft); color: var(--ok); font-weight: 600; font-size: 14px; }
+
+.g-toc { position: sticky; top: 0; z-index: 5; display: flex; gap: 8px; margin: 14px 0 0; padding: 10px 0; overflow-x: auto; background: var(--paper); scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.g-toc::-webkit-scrollbar { display: none; }
+.g-toc a { flex: none; padding: 7px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.g-toc a:hover, .g-toc a:focus-visible { border-color: var(--stamp); color: var(--stamp); }
+
+.g-sec { margin-top: 40px; scroll-margin-top: 64px; }
+.g-sec > h2 { margin: 0 0 6px; font-size: 26px; line-height: 1.25; }
+.g-sec > .g-sub { margin: 0 0 16px; color: var(--muted); }
+
+.g-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; counter-reset: gs; }
+.g-steps li { padding: 18px 16px 16px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); counter-increment: gs; }
+.g-steps li::before { content: counter(gs); display: grid; place-items: center; width: 34px; height: 34px; margin-bottom: 10px; border-radius: 50%; background: var(--stamp); color: var(--stamp-ink); font-weight: 800; }
+.g-steps b { display: block; margin-bottom: 4px; font-size: 17px; }
+.g-steps span { color: var(--muted); font-size: 14.5px; }
+
+.g-shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px 16px; margin: 22px 0 0; }
+.g-shot { margin: 0; text-align: center; }
+.g-shot img { display: block; width: 100%; max-width: 300px; height: auto; margin: 0 auto 8px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.g-shot figcaption { color: var(--muted); font-size: 14px; }
+.g-shot figcaption b { color: var(--ink); }
+
+.g-pick { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.g-pick a { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.g-pick a:hover, .g-pick a:focus-visible { border-color: var(--stamp); }
+.g-pick .want { font-weight: 600; }
+.g-pick .use { flex: none; padding: 4px 10px; border-radius: 999px; background: var(--stamp-soft); color: var(--stamp); font-size: 13.5px; font-weight: 700; white-space: nowrap; }
+@media (max-width: 520px) { .g-pick a { flex-direction: column; align-items: flex-start; gap: 6px; } }
+
+.g-tool { margin-top: 16px; padding: 20px; border: 2px solid transparent; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow); scroll-margin-top: 64px; }
+.g-tool:target { border-color: var(--stamp); }
+.g-tool h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0 0 4px; font-size: 21px; }
+.g-ico { font-size: 28px; line-height: 1; }
+.g-new { padding: 2px 8px; border-radius: 6px; background: var(--warn); color: #fff; font-size: 12px; font-weight: 700; }
+.g-what { margin: 0 0 12px; color: var(--muted); }
+.g-io { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; padding: 0; list-style: none; }
+.g-io li { padding: 4px 12px; border-radius: 999px; background: var(--paper); font-size: 13.5px; }
+.g-io b { color: var(--stamp); }
+.g-ol { display: grid; gap: 10px; margin: 0 0 12px; padding: 0; list-style: none; counter-reset: gl; }
+.g-ol li { position: relative; min-height: 28px; padding-left: 38px; counter-increment: gl; }
+.g-ol li::before { content: counter(gl); position: absolute; top: 0; left: 0; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--stamp-soft); color: var(--stamp); font-size: 14px; font-weight: 800; }
+.g-tip, .g-warn { margin: 10px 0 0; padding: 10px 14px; border-radius: 12px; font-size: 14.5px; }
+.g-tip { border-left: 4px solid var(--ok); background: var(--ok-soft); }
+.g-warn { border-left: 4px solid var(--gold); background: var(--gold-soft); color: var(--gold-ink); }
+.g-tool code, .g-sec code { padding: 1px 7px; border-radius: 6px; background: var(--paper); font-size: 0.92em; }
+
+.g-table { width: 100%; border-collapse: separate; border-spacing: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 14px; background: var(--surface); }
+.g-table th, .g-table td { padding: 11px 14px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+.g-table thead th { background: var(--stamp-soft); color: var(--stamp); }
+.g-table tbody th { width: 28%; font-weight: 600; }
+.g-table tbody tr:last-child th, .g-table tbody tr:last-child td { border-bottom: 0; }
+
+.g-box { margin-top: 16px; padding: 18px 20px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+.g-box h3 { margin: 0 0 8px; font-size: 18px; }
+.g-box p { margin: 0 0 8px; }
+.g-box p:last-child { margin-bottom: 0; }
+.g-cta { margin-top: 36px; }
+.guide-page .faq details { padding: 12px 4px; }
+.guide-page .faq p { margin: 8px 0 0; }
+.g-lang { padding: 7px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 700; text-decoration: none; }
+.g-lang:hover, .g-lang:focus-visible { border-color: var(--stamp); color: var(--stamp); }

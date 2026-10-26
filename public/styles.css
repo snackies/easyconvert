@@ -223,6 +223,17 @@ body { overflow-x: hidden; overflow-x: clip; }
 .plan .pname { font-weight: 700; }
 .plan .pprice { font-size: 30px; font-weight: 800; line-height: 1.15; }
 .plan .pnote { color: var(--muted); font-size: 13px; }
+.plan .pwrap { flex: 1; }
+.plan .psave { margin-top: 2px; color: var(--ok); font-size: 13px; font-weight: 700; }
+.plan .pdesc { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); font-size: 14px; line-height: 1.5; }
+.plan .plist { display: grid; gap: 5px; margin-top: 10px; color: var(--muted); font-size: 13px; }
+.plan .pli { position: relative; padding-left: 20px; }
+.plan .pli::before { content: "✓"; position: absolute; left: 0; color: var(--ok); font-weight: 800; }
+.plans-modal .plist { display: none; }
+.plans-modal .pdesc { margin-top: 6px; padding-top: 6px; color: var(--muted); font-size: 12.5px; }
+.pricing-foot { margin: 14px 0 0; color: var(--muted); font-size: 13.5px; }
+.help-link { display: inline-block; margin: -8px 0 14px; font-size: 14px; font-weight: 600; }
+.link-verify + .link-verify { margin-left: 16px; }
 .plan .pcta { margin-top: 10px; padding: 9px; border-radius: 10px; background: var(--stamp); color: var(--stamp-ink); text-align: center; font-weight: 700; }
 .plan.best { border-color: var(--stamp); box-shadow: 0 0 0 2px var(--stamp) inset; }
 .plan .ptag { position: absolute; top: -10px; left: 12px; padding: 2px 10px; border-radius: 6px; background: var(--gold); color: #3a2700; font-size: 12px; font-weight: 800; }
@@ -264,5 +275,7 @@ body { overflow-x: hidden; overflow-x: clip; }
   .plans { grid-template-columns: 1fr; }
   .plan { flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; }
   .plan .pcta { width: 100%; }
+  .plan .pwrap { flex: 1 1 100%; }
+  .link-verify + .link-verify { margin-left: 0; }
   .card { padding: 16px; }
 }

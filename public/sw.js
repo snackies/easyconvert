@@ -1,14 +1,14 @@
 /* Service worker: เก็บไฟล์ของเว็บไว้ในเครื่อง เพื่อใช้งานได้แม้ไม่มีอินเทอร์เน็ต
    (และเป็นวิธีพิสูจน์ว่าการประมวลผลไม่ต้องส่งไฟล์ออกไป: เปิดโหมดเครื่องบินแล้วลองใช้ได้)
    ไม่แตะ /api/ เลย: เรียกเซิร์ฟเวอร์ตรง ๆ เสมอ */
-const CACHE = "ec-v18";
+const CACHE = "ec-v19";
 const CORE = [
   "./", "index.html", "styles.css", "app.js", "esign.js", "docx.js", "translations.js", "ocr.js", "theme.js",
   "vendor/pdf-lib.min.js", "vendor/pdf.js", "vendor/pdf.worker.js", "vendor/jszip.min.js",
   "vendor/fonts/plex-thai-Regular.woff", "vendor/fonts/plex-thai-Medium.woff",
   "vendor/fonts/plex-thai-SemiBold.woff", "vendor/fonts/plex-thai-Bold.woff",
   "vendor/fonts/sriracha-Regular.woff", "vendor/fonts/charmonman-Bold.woff",
-  "privacy.html", "terms.html",
+  "privacy.html", "terms.html", "guide.html", "guide-en.html", "guide.css", "guide.js",
 ];
 
 self.addEventListener("install", (e) => {

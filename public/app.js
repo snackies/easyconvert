@@ -130,6 +130,8 @@
   function renderToolHeader() {
     $("tool-title").textContent = t("tab_" + activeTool);
     $("tool-desc").textContent = t("desc_" + activeTool);
+    const gpage = currentLang === "en" ? "guide-en.html" : "guide.html";
+    document.querySelectorAll("a[data-guide]").forEach((a) => a.setAttribute("href", gpage + (a.id === "tool-help" ? "#tool-" + activeTool : "")));
     const kinds = toolById(activeTool).kinds;
     const key = kinds.length === 2 ? "drop_types_both" : kinds[0] === "image" ? "drop_types_img" : "drop_types_pdf";
     $("drop-types").textContent = t(key) + " · " + t(toolById(activeTool).multi ? "drop_multi" : "drop_single");
@@ -151,13 +153,22 @@
         b.className = "plan" + (plan === "year" ? " best" : "");
         b.setAttribute("data-plan", plan);
         const tag = plan === "year" ? t("plan_best") : plan === "month" ? t("plan_popular") : "";
-        const perDay =
-          '<span class="pnote">' + fmt(t("plan_perday"), { x: (PRICES[plan] / PLAN_DAYS[plan]).toFixed(2) }) + "</span>";
+        const perDay = (p) => PRICES[p] / PLAN_DAYS[p];
+        const save =
+          plan === "month" ? fmt(t("plan_save_month"), { pct: Math.round((1 - perDay("month") / perDay("week")) * 100) })
+          : plan === "year" ? fmt(t("plan_save_year"), { m: Math.round(PRICES.year / 12), pct: Math.round((1 - PRICES.year / (PRICES.month * 12)) * 100) })
+          : t("plan_save_week");
+        const incl = ["plan_inc_days", "plan_inc_tools", "plan_inc_big", "plan_inc_once"]
+          .map((k) => '<span class="pli">' + fmt(t(k), { d: PLAN_DAYS[plan], mb: FREE_LIMIT_MB }) + "</span>")
+          .join("");
         b.innerHTML =
           (tag ? '<span class="ptag">' + tag + "</span>" : "") +
           '<span class="pwrap"><span class="pname">' + t("plan_" + plan + "_name") + "</span>" +
           '<span class="pprice">' + fmt(t("price_fmt"), { p: PRICES[plan] }) + "</span>" +
-          '<span class="pnote">' + t("plan_" + plan + "_note") + "</span>" + perDay + "</span>" +
+          '<span class="pnote">' + fmt(t("plan_perday"), { x: perDay(plan).toFixed(2) }) + "</span>" +
+          '<span class="psave">' + save + "</span>" +
+          '<span class="pdesc">' + t("plan_" + plan + "_for") + "</span>" +
+          '<span class="plist">' + incl + "</span></span>" +
           '<span class="pcta">' + t("plan_cta") + "</span>";
         box.appendChild(b);
       });

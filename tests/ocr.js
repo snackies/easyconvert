@@ -5,7 +5,7 @@ const fs = require("fs"), path = require("path");
 const JSZip = require("jszip");
 let bad = 0;
 const ok = (c, m, extra) => { console.log((c ? "PASS " : "FAIL ") + m + (extra ? "  -> " + extra : "")); if (!c) bad++; };
-
+ 
 (async () => {
   const srv = await start(4260);
   const b = await chromium.launch();
@@ -19,7 +19,7 @@ const ok = (c, m, extra) => { console.log((c ? "PASS " : "FAIL ") + m + (extra ?
   p.on("request", (r) => { const u = new URL(r.url()); if (u.origin !== "http://localhost:4260" && !/^(data|blob):/.test(r.url())) external.push(r.url()); if (/vendor\/ocr\//.test(u.pathname)) ocrReq++; });
   await p.goto("http://localhost:4260/", { waitUntil: "load" });
   await p.waitForFunction(() => window.PDFLib && window.pdfjsLib && window.JSZip && window.EC && window.EC.ocr);
-
+ 
   async function convert(buf, name) {
     await p.click('.tool-tile[data-tool="pdf2word"]');
     await p.setInputFiles("#file-input", [{ name, mimeType: "application/pdf", buffer: Buffer.from(buf) }]);
@@ -33,7 +33,7 @@ const ok = (c, m, extra) => { console.log((c ? "PASS " : "FAIL ") + m + (extra ?
     const xml = await zip.file("word/document.xml").async("string");
     return { text: (xml.match(/<w:t[^>]*>[^<]*<\/w:t>/g) || []).map((s) => s.replace(/<[^>]+>/g, "")).join(" "), status: await p.textContent("#file-status") };
   }
-
+ 
   // 1) ภาพสแกน: วาดข้อความลงภาพ แล้วใส่เป็น PDF หน้าเดียว (ไม่มีข้อความจริง)
   const scanBytes = await p.evaluate(async () => {
     const c = document.createElement("canvas"); c.width = 1240; c.height = 1754;
@@ -52,14 +52,14 @@ const ok = (c, m, extra) => { console.log((c ? "PASS " : "FAIL ") + m + (extra ?
   ok(/ทดสอบ/.test(r1.text), "ocr: อ่านภาษาไทยได้", r1.text.slice(-60));
   ok(/OCR/.test(r1.status), "ocr: มีคำเตือนให้ตรวจทานผล OCR", r1.status.slice(-80));
   ok(ocrReq > 0, "ocr: โหลดไฟล์ OCR จากเว็บเราเอง", ocrReq + " requests");
-
+ 
   // 2) PDF ข้อความปกติ: ต้องไม่โหลด OCR
   const before = ocrReq;
   const clean = fs.readFileSync(path.join(__dirname, "fx", "clean.pdf"));
   const r2 = await convert(clean, "ocr_clean");
   ok(/Clean page 1 hello/.test(r2.text), "ocr: PDF ข้อความปกติแปลงได้เหมือนเดิม");
   ok(ocrReq === before, "ocr: PDF ข้อความปกติไม่โหลดไฟล์ OCR เลย");
-
+ 
   ok(external.length === 0, "ocr: ไม่มีคำขอไปโดเมนอื่น", external.slice(0, 2).join(" "));
   ok(errs.length === 0, "ocr: ไม่มี error/CSP violation", errs.join(" | ").slice(0, 200));
   await b.close(); srv.close && srv.close();

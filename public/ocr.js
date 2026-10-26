@@ -6,7 +6,7 @@
   const EC = (window.EC = window.EC || {});
   const BASE = "vendor/ocr/";
   let loading = null, worker = null, workerP = null, progressCb = null;
-
+ 
   function loadScript(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement("script");
@@ -16,7 +16,7 @@
       document.head.appendChild(s);
     });
   }
-
+ 
   // เลือกไฟล์ core ที่เครื่องรองรับ (SIMD เร็วกว่า) โดยระบุไฟล์ตรง ๆ จึงไม่ต้องมีไฟล์ชุดอื่น
   function coreFile() {
     let simd = false;
@@ -25,7 +25,7 @@
     } catch (e) {}
     return BASE + (simd ? "tesseract-core-simd-lstm.wasm.js" : "tesseract-core-lstm.wasm.js");
   }
-
+ 
   async function ensureWorker() {
     if (worker) return worker;
     if (workerP) return workerP;
@@ -49,11 +49,11 @@
     })();
     try { return await workerP; } catch (e) { workerP = null; loading = null; throw e; }
   }
-
+ 
   function clean(s) {
     return String(s || "").replace(/\u0000/g, "").replace(/\u0E4D\u0E32/g, "\u0E33");
   }
-
+ 
   /* อ่านข้อความจากภาพ คืนค่าเป็นบรรทัดและคำพร้อมตำแหน่ง (หน่วยพิกเซลของภาพ) */
   async function recognize(canvas, onProgress) {
     const w = await ensureWorker();
@@ -73,12 +73,12 @@
     );
     return lines;
   }
-
+ 
   async function terminate() {
     const w = worker;
     worker = null; workerP = null; progressCb = null;
     if (w) { try { await w.terminate(); } catch (e) {} }
   }
-
+ 
   EC.ocr = { recognize, terminate, isReady: () => !!worker };
 })();
