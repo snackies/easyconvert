@@ -132,7 +132,7 @@
     $("tool-desc").textContent = t("desc_" + activeTool);
     const kinds = toolById(activeTool).kinds;
     const key = kinds.length === 2 ? "drop_types_both" : kinds[0] === "image" ? "drop_types_img" : "drop_types_pdf";
-    $("drop-types").textContent = t(key);
+    $("drop-types").textContent = t(key) + " · " + t(toolById(activeTool).multi ? "drop_multi" : "drop_single");
   }
  
   function updateStatus() {
