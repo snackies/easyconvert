@@ -1,7 +1,7 @@
 const translations = {
   th: {
     btn_upgrade: "อัปเกรดพรีเมียม",
-    premium_tier: "👑 สมาชิกพรีเมียม (PRO)",
+    premium_tier: "👑 พรีเมียม (PRO)",
     hero_title: "จัดการไฟล์ PDF และรูปภาพ ในเครื่องคุณเอง",
     hero_sub: "ไฟล์ไม่ถูกอัปโหลดไปที่ไหน เหมาะกับเอกสารสำคัญอย่างสำเนาบัตรประชาชน สัญญา และเอกสารการเงิน",
     point_1: "ไฟล์ไม่ออกจากเครื่อง",
@@ -42,6 +42,7 @@ const translations = {
     err_bad_pdf: "ไฟล์ PDF เสียหายหรืออ่านไม่ได้",
     dw_scan: "ไฟล์นี้เป็นภาพสแกน ไม่มีข้อความให้ดึง ต้องใช้ OCR (กำลังพัฒนา)",
     dw_done: "แปลงเป็น Word แล้ว {pages} หน้า {imgs} รูป ตารางซับซ้อนอาจต้องจัดเองใน Word",
+    dw_flat: "หน้า {list} ส่วนใหญ่เป็นภาพหรือเส้นวาด (เช่น ฟอร์มที่ถูกบันทึกเป็นรูป หรือตัวอักษรถูกแปลงเป็นเส้น) จึงดึงตัวหนังสือในฟอร์มเป็นข้อความ Word ไม่ได้ ได้เฉพาะข้อความจริงที่พิมพ์เพิ่มไว้และรูป ต้องใช้ OCR (กำลังพัฒนา)",
     dw_warn: "แต่ไฟล์ต้นฉบับไม่ได้ระบุตัวอักษรไทยบางตัวไว้ {n} ตำแหน่ง (มักเป็นวรรณยุกต์) จึงหายไป กรุณาตรวจทานข้อความ",
  
     tab_img2pdf: "รูปเป็น PDF", desc_img2pdf: "รวมรูปหลายรูปเป็นไฟล์ PDF เดียว",
@@ -174,7 +175,7 @@ const translations = {
   },
   en: {
     btn_upgrade: "Upgrade to Pro",
-    premium_tier: "👑 Premium Member (PRO)",
+    premium_tier: "👑 Premium (PRO)",
     hero_title: "Handle PDFs and images right on your own device",
     hero_sub: "Your files are never uploaded. Built for sensitive documents like ID copies, contracts and financial papers.",
     point_1: "Files never leave your device",
@@ -215,6 +216,7 @@ const translations = {
     err_bad_pdf: "This PDF is damaged or can't be read.",
     dw_scan: "This looks like a scanned image with no text to extract. OCR is needed (coming later).",
     dw_done: "Converted to Word: {pages} page(s), {imgs} image(s). Complex tables may need manual fixing in Word.",
+    dw_flat: "Page(s) {list} are mostly pictures or drawn outlines (for example a form saved as an image, or text converted to outlines), so the form text cannot become Word text. Only real typed text and pictures were kept. OCR is needed (coming later).",
     dw_warn: "The source file does not identify {n} Thai character(s) (usually tone marks), so they are missing. Please proofread.",
  
     tab_img2pdf: "Images to PDF", desc_img2pdf: "Combine several images into one PDF",

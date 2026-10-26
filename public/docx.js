@@ -237,9 +237,10 @@
 
     const pageArea = vp.width * vp.height;
     const imgs = [];
+    let skippedFull = false;
     for (const f of await extractImages(page, vp, opList)) {
       if (f.w < 12 || f.h < 12 || f.w * f.h < 400) continue;
-      if (textChars >= 20 && f.w * f.h >= 0.85 * pageArea) continue; // ภาพพื้นหลัง/ชั้นภาพของ PDF ที่มีข้อความจริง
+      if (textChars >= 20 && f.w * f.h >= 0.85 * pageArea) { skippedFull = true; continue; } // ภาพพื้นหลัง/ชั้นภาพของ PDF ที่มีข้อความจริง
       const key = pageNum + ":" + (typeof f.ref === "string" ? f.ref : "inline" + imgs.length);
       let bytes = imgCache.get(key);
       if (!bytes) {
@@ -251,7 +252,10 @@
     }
     imgs.sort((a, b) => a.top - b.top);
     if (page.cleanup) page.cleanup();
-    return { w: vp.width, h: vp.height, lines, imgs, textChars, unmapped: lines.unmapped || 0 };
+    // ตัวอักษรที่ถูกแปลงเป็นเส้นวาด (เช่น ฟอร์มที่บันทึกจาก iPhone/iPad) ไม่มีข้อความให้ดึง นับคำสั่งระบายสีเส้นเพื่อตรวจ
+    let fills = 0;
+    for (const fn of opList.fnArray) if (fn === pdfjsLib.OPS.fill || fn === pdfjsLib.OPS.eoFill || fn === pdfjsLib.OPS.fillStroke || fn === pdfjsLib.OPS.eoFillStroke) fills++;
+    return { w: vp.width, h: vp.height, lines, imgs, textChars, unmapped: lines.unmapped || 0, flat: textChars < 200 && (skippedFull || fills >= 150) };
   }
 
   /* ---------- จัดย่อหน้า ---------- */
@@ -340,8 +344,10 @@
 
     pages.forEach((pg, pi) => {
       const lines = pg.lines;
-      const minLeft = lines.length ? Math.min(...lines.map((l) => l.left)) : 36;
-      const maxRight = lines.length ? Math.max(...lines.map((l) => l.right)) : pg.w - 36;
+      const imgL = pg.imgs.length ? Math.min(...pg.imgs.map((i) => i.left)) : Infinity;
+      const imgR = pg.imgs.length ? Math.max(...pg.imgs.map((i) => i.left + i.w)) : -Infinity;
+      const minLeft = Math.min(lines.length ? Math.min(...lines.map((l) => l.left)) : 36, imgL);
+      const maxRight = Math.max(lines.length ? Math.max(...lines.map((l) => l.right)) : pg.w - 36, imgR);
       const firstTop = Math.min(
         lines.length ? lines[0].y - 0.9 * lines[0].size : pg.h,
         pg.imgs.length ? pg.imgs[0].top : pg.h
@@ -354,33 +360,53 @@
       const contentH = pg.h - pg.T - pg.B;
       const paras = groupParagraphs(lines, pg.L, pg.w - pg.R);
 
+      // รวมรูปที่อยู่แถวเดียวกันและต่อชิดกัน (ภาพที่ถูกแบ่งเป็นชิ้น) เป็นแถวเดียว
+      const rows = [];
+      pg.imgs.forEach((im) => {
+        const row = rows.find((r) => {
+          const ov = Math.min(r.top + r.h, im.top + im.h) - Math.max(r.top, im.top);
+          const near = Math.abs(im.left - r.right) < 3 || Math.abs(r.left - (im.left + im.w)) < 3;
+          return ov > 0.6 * Math.min(r.h, im.h) && near;
+        });
+        if (row) {
+          row.items.push(im);
+          row.left = Math.min(row.left, im.left); row.right = Math.max(row.right, im.left + im.w);
+          row.top = Math.min(row.top, im.top); row.h = Math.max(row.h, im.h);
+        } else rows.push({ items: [im], left: im.left, right: im.left + im.w, top: im.top, h: im.h });
+      });
+      rows.forEach((r) => r.items.sort((a, b) => a.left - b.left));
+      rows.sort((a, b) => a.top - b.top);
       const blocks = []; // ผสมย่อหน้ากับรูปตามลำดับบนลงล่าง
       let ii = 0;
       paras.forEach((p) => {
         const top = p.lines[0].y - 0.9 * p.size;
-        while (ii < pg.imgs.length && pg.imgs[ii].top <= top + 2) blocks.push({ img: pg.imgs[ii++] });
+        while (ii < rows.length && rows[ii].top <= top + 2) blocks.push({ row: rows[ii++] });
         blocks.push({ p });
       });
-      while (ii < pg.imgs.length) blocks.push({ img: pg.imgs[ii++] });
+      while (ii < rows.length) blocks.push({ row: rows[ii++] });
 
       let cursor = pg.T; // ตำแหน่ง y ที่ใช้ไปแล้ว (พิกัดจอ)
       let used = 0;
       const xml = [];
       blocks.forEach((b) => {
-        if (b.img) {
-          const im = b.img;
-          const w = Math.min(im.w, contentW);
-          const h = (im.h * w) / im.w;
-          const before = clamp(Math.round(tw(Math.max(0, im.top - cursor))), 0, tw(Math.max(0, contentH - used - h)));
-          imgNo++;
-          const rid = "rIdImg" + imgNo;
-          zip.file("word/media/image" + imgNo + ".jpg", im.bytes);
-          rels.push('<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image' + imgNo + '.jpg"/>');
-          xml.push(paraXml(imageRunXml(rid, imgNo, emu(w), emu(h)), {
-            before, line: 240, indLeft: tw(Math.max(0, im.left - pg.L)), indFirst: 0, jc: null, tabs: null,
+        if (b.row) {
+          const row = b.row;
+          const scale = Math.min(1, contentW / Math.max(1, row.right - row.left));
+          const h = row.h * scale;
+          const before = clamp(Math.round(tw(Math.max(0, row.top - cursor))), 0, tw(Math.max(0, contentH - used - h)));
+          let runs = "";
+          row.items.forEach((im) => {
+            imgNo++;
+            const rid = "rIdImg" + imgNo;
+            zip.file("word/media/image" + imgNo + ".jpg", im.bytes);
+            rels.push('<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image' + imgNo + '.jpg"/>');
+            runs += imageRunXml(rid, imgNo, emu(im.w * scale), emu(im.h * scale));
+          });
+          xml.push(paraXml(runs, {
+            before, line: 240, indLeft: tw(Math.max(0, row.left - pg.L)), indFirst: 0, jc: null, tabs: null,
           }));
           used += before / 20 + h;
-          cursor = im.top + h;
+          cursor = row.top + h;
           return;
         }
         const p = b.p;
@@ -486,7 +512,10 @@
     const { blob, images } = await buildDocx(pages);
     EC.download(blob, EC.baseName(file.name) + ".docx", DOCX_TYPE);
     const warn = unmapped ? " " + fmt(t("dw_warn"), { n: unmapped }) : "";
-    return { message: fmt(t("dw_done"), { pages: pages.length, imgs: images }) + warn };
+    const flatPages = [];
+    pages.forEach((pg, i) => { if (pg.flat) flatPages.push(i + 1); });
+    const flatWarn = flatPages.length ? " ⚠ " + fmt(t("dw_flat"), { list: flatPages.join(", ") }) : "";
+    return { message: fmt(t("dw_done"), { pages: pages.length, imgs: images }) + warn + flatWarn };
   }
 
   EC.tools.pdf2word = { run };
