@@ -165,6 +165,10 @@ const translations = {
     env_inapp: "ดูเหมือนคุณเปิดเว็บจากในแอป (เช่น LINE, Facebook) ซึ่งอาจเลือกไฟล์หรือดาวน์โหลดไฟล์ไม่ได้ แนะนำให้เปิดด้วย Safari หรือ Chrome",
     env_copy: "คัดลอกลิงก์",
     env_copied: "คัดลอกแล้ว",
+    save_btn: "บันทึกไฟล์",
+    save_hint: "ถ้าไฟล์ไม่เริ่มดาวน์โหลดเอง ให้กดปุ่มด้านบน",
+    save_hint_ios: "แตะปุ่มด้านบน แล้วเลือก ดาวน์โหลด เพื่อเก็บไฟล์ลงเครื่อง",
+    status_done_ios: "เสร็จแล้ว แตะ บันทึกไฟล์ เพื่อเก็บไฟล์",
     foot_privacy: "ความเป็นส่วนตัวและวิธีตรวจสอบ",
     foot_contact: "ติดต่อเรา"
   },
@@ -334,6 +338,10 @@ const translations = {
     env_inapp: "It looks like you opened this from inside an app (such as LINE or Facebook), where picking or downloading files may not work. Open it in Safari or Chrome instead.",
     env_copy: "Copy link",
     env_copied: "Copied",
+    save_btn: "Save file",
+    save_hint: "If the download does not start by itself, tap the button above.",
+    save_hint_ios: "Tap the button above, then choose Download to keep the file.",
+    status_done_ios: "Done. Tap Save file to keep your file.",
     foot_privacy: "Privacy and how to verify",
     foot_contact: "Contact"
   }

@@ -209,6 +209,7 @@
     if (prev && prev.onLeave) { try { prev.onLeave(); } catch (e) { console.error(e); } }
     activeTool = id;
     selectedFiles = [];
+    hideSaveLink();
     $("file-input").value = "";
     document.querySelectorAll(".tool-tile").forEach((el) => {
       el.classList.toggle("active", el.getAttribute("data-tool") === id);
@@ -690,16 +691,38 @@
   }
  
   const baseName = (name) => name.replace(/\.[^.]+$/, "");
+  // iPad/iPhone: การสั่งดาวน์โหลดด้วยโค้ดหลังประมวลผลเสร็จทำให้ Safari ค้าง เปิดตัวเลือกไฟล์ไม่ได้อีก
+  // จึงให้ผู้ใช้แตะปุ่ม "บันทึกไฟล์" เอง (แตะจริง = ดาวน์โหลดที่ Safari รองรับเต็มที่)
+  let lastBlobUrl = null;
+  function isIOS() {
+    const ua = navigator.userAgent || "";
+    return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+  function doneText() { return t(isIOS() ? "status_done_ios" : "status_done"); }
+  function hideSaveLink() {
+    const box = $("save-box");
+    if (box) box.hidden = true;
+    if (lastBlobUrl) { URL.revokeObjectURL(lastBlobUrl); lastBlobUrl = null; }
+  }
   function download(data, filename, type) {
     const blob = data instanceof Blob ? data : new Blob([data], { type });
+    if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
     const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    lastBlobUrl = url;
+    const link = $("save-link");
+    link.href = url;
+    link.setAttribute("download", filename);
+    link.textContent = "⬇ " + t("save_btn") + " (" + filename + ")";
+    $("save-hint").textContent = t(isIOS() ? "save_hint_ios" : "save_hint");
+    $("save-box").hidden = false;
+    if (!isIOS()) {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
   }
   async function deliver(results, zipName) {
     if (results.length === 1) {
@@ -869,7 +892,7 @@
     await deliver(results, "EasyConvert_shrunk.zip");
     if (!allOk) return { message: fmt(t("shrink_fail"), { to: fmtSize(first.to) }) };
     if (results.length === 1) return { message: fmt(t("shrink_ok"), { from: fmtSize(first.from), to: fmtSize(first.to) }) };
-    return { message: t("status_done") + " " + t("zip_note") };
+    return { message: doneText() + " " + t("zip_note") };
   }
  
   async function watermarkFiles() {
@@ -977,6 +1000,7 @@
     }
  
     busy = true;
+    hideSaveLink();
     const btn = $("process-btn");
     btn.disabled = true;
     $("receipt").hidden = true;
@@ -988,7 +1012,7 @@
       const res = await runTool(activeTool);
       if (res !== false) {
         if (!isPremiumUser) trialConsume(activeTool);
-        $("file-status").textContent = (res && res.message) || t("status_done");
+        $("file-status").textContent = (res && res.message) || doneText();
         const seconds = ((performance.now() - t0) / 1000).toFixed(1);
         showReceipt(selectedFiles.length, seconds, Math.max(0, countDataRequests() - netBefore));
       }

@@ -181,6 +181,8 @@ body { overflow-x: hidden; overflow-x: clip; }
 .sg-rs::after { content: ""; position: absolute; inset: 8px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; }
 
 /* ---------- ใบรับรองการประมวลผล ---------- */
+.btn-save { box-sizing: border-box; text-align: center; text-decoration: none; overflow-wrap: anywhere; }
+.save-box .note { margin: 6px 0 0; font-size: 13px; color: var(--muted); }
 .receipt { margin-top: 14px; padding: 14px 16px; border: 2px dashed var(--ok); border-radius: 14px; background: var(--ok-soft); color: var(--ink); }
 .receipt.warn { border-color: var(--warn); background: var(--warn-soft); }
 .receipt-title { margin-bottom: 8px; font-weight: 800; color: var(--ok); }
