@@ -22,8 +22,11 @@
   --shadow: 0 1px 2px rgba(22, 32, 47, 0.06), 0 8px 24px rgba(22, 32, 47, 0.06);
   --font: "Plex Thai", "Sukhumvit Set", "Thonburi", "Noto Sans Thai", "Leelawadee UI", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
+:root { color-scheme: light dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --paper: #0e131b;
     --surface: #161d28;
     --ink: #edf1f7;
@@ -41,6 +44,25 @@
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
   }
 }
+:root[data-theme="dark"] {
+  --paper: #0e131b;
+  --surface: #161d28;
+  --ink: #edf1f7;
+  --muted: #9aa6b8;
+  --line: #28313f;
+  --stamp: #8aa4ff;
+  --stamp-soft: #1c2745;
+  --stamp-ink: #0e131b;
+  --ok: #4cc9a0;
+  --ok-soft: #12302a;
+  --warn: #ff8a80;
+  --warn-soft: #3a1a18;
+  --gold-soft: #3a2f10;
+  --gold-ink: #ffe3a1;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.theme-btn { width: 40px; height: 40px; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-size: 18px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+.theme-btn:hover { border-color: var(--stamp); }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
