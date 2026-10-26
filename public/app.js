@@ -27,6 +27,12 @@
     { id: "pdf2excel", icon: "📊", kinds: ["pdf"] },
   ];
   const toolById = (id) => TOOLS.find((x) => x.id === id);
+  // หน้าเครื่องมือ (เช่น merge-pdf.html) ระบุเครื่องมือไว้ที่ <body data-tool> ส่วนหน้าแรกรับ ?tool=รหัส ได้
+  function initialTool() {
+    let id = document.body.getAttribute("data-tool") || "";
+    if (!toolById(id)) { try { id = new URLSearchParams(location.search).get("tool") || ""; } catch (e) { id = ""; } }
+    return toolById(id) ? id : "img2pdf";
+  }
  
   /* ============ สถานะ ============ */
   let currentLang = "th";
@@ -203,7 +209,13 @@
         '<span class="ti" aria-hidden="true">' + tool.icon + "</span>" +
         '<span class="tn" data-i18n="tab_' + tool.id + '"></span>' +
         (tool.isNew ? '<span class="tag" data-i18n="tag_new"></span>' : "");
-      b.addEventListener("click", () => selectTool(tool.id));
+      b.addEventListener("click", () => {
+        // อยู่บนหน้าเฉพาะเครื่องมือ แล้วกดเครื่องมืออื่น: ไปหน้าของเครื่องมือนั้น (หัวข้อและเนื้อหาจะตรงกับที่ใช้อยู่)
+        const own = document.body.getAttribute("data-tool");
+        const link = own && own !== tool.id ? document.querySelector('a[data-tool-link="' + tool.id + '"]') : null;
+        if (link) { location.href = link.getAttribute("href"); return; }
+        selectTool(tool.id);
+      });
       grid.appendChild(b);
     });
   }
@@ -722,6 +734,10 @@
     const ua = navigator.userAgent || "";
     return /iPad|iPhone|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   }
+  // เปิดจากไอคอนที่หน้าจอโฮม (ติดตั้งเป็นแอป) บน iPhone/iPad
+  function isStandaloneApp() {
+    try { return window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches); } catch (e) { return false; }
+  }
   function doneText() { return t(isIOS() ? "status_done_ios" : "status_done"); }
   function hideSaveLink() {
     const box = $("save-box");
@@ -738,6 +754,7 @@
     link.setAttribute("download", filename);
     link.textContent = "⬇ " + t("save_btn") + " (" + filename + ")";
     $("save-hint").textContent = t(isIOS() ? "save_hint_ios" : "save_hint");
+    if (isIOS() && isStandaloneApp()) $("save-hint").textContent += " " + t("save_hint_app");
     $("save-box").hidden = false;
     if (!isIOS()) {
       const a = document.createElement("a");
@@ -996,7 +1013,7 @@
   function countDataRequests() {
     // นับคำขอส่งข้อมูล (fetch/XHR/beacon) จากบันทึกของเบราว์เซอร์เอง ไม่ใช่ตัวนับของโค้ดเรา
     try {
-      return performance.getEntriesByType("resource").filter((e) => ["fetch", "xmlhttprequest", "beacon"].indexOf(e.initiatorType) >= 0).length;
+      return performance.getEntriesByType("resource").filter((e) => ["fetch", "xmlhttprequest", "beacon"].indexOf(e.initiatorType) >= 0 && String(e.name).indexOf("/_vercel/insights/") < 0).length;
     } catch (e) {
       return 0;
     }
@@ -1105,7 +1122,7 @@
     drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); setFiles(e.dataTransfer.files); });
  
     checkEnvironment();
-    selectTool("img2pdf");
+    selectTool(initialTool());
     changeLanguage(currentLang);
     verifyPremium().then(claimPaidSession);
     if ("serviceWorker" in navigator && location.protocol !== "file:") {

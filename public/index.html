@@ -8,7 +8,29 @@
     <link rel="stylesheet" href="styles.css">
     <script src="theme.js"></script>
     <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-title" content="EasyConvert">
     <meta name="theme-color" content="#2340b8">
+    <!-- seo:head:start -->
+    <link rel="canonical" href="https://easyconvert-five.vercel.app/">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="EasyConvert">
+    <meta property="og:locale" content="th_TH">
+    <meta property="og:locale:alternate" content="en_US">
+    <meta property="og:title" content="EasyConvert | เครื่องมือ PDF และรูปภาพ ไฟล์ไม่ออกจากเครื่องคุณ">
+    <meta property="og:description" content="ลดขนาด PDF ใส่ลายน้ำสำเนาบัตรประชาชน รวม แยก แปลงไฟล์ ทำในเบราว์เซอร์ของคุณ ไฟล์ไม่ถูกอัปโหลด">
+    <meta property="og:url" content="https://easyconvert-five.vercel.app/">
+    <meta property="og:image" content="https://easyconvert-five.vercel.app/og.png">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="EasyConvert: เครื่องมือ PDF และรูปภาพ ไฟล์ไม่ออกจากเครื่องคุณ">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="EasyConvert | เครื่องมือ PDF และรูปภาพ ไฟล์ไม่ออกจากเครื่องคุณ">
+    <meta name="twitter:description" content="ลดขนาด PDF ใส่ลายน้ำสำเนาบัตรประชาชน รวม แยก แปลงไฟล์ ทำในเบราว์เซอร์ของคุณ ไฟล์ไม่ถูกอัปโหลด">
+    <meta name="twitter:image" content="https://easyconvert-five.vercel.app/og.png">
+    <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"WebSite","@id":"https://easyconvert-five.vercel.app/#site","name":"EasyConvert","url":"https://easyconvert-five.vercel.app/","inLanguage":["th","en"]},{"@type":"WebApplication","@id":"https://easyconvert-five.vercel.app/#app","name":"EasyConvert","url":"https://easyconvert-five.vercel.app/","description":"ลดขนาด PDF ใส่ลายน้ำสำเนาบัตรประชาชน รวม แยก แปลงไฟล์ ทำในเบราว์เซอร์ของคุณ ไฟล์ไม่ถูกอัปโหลด","applicationCategory":"UtilitiesApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":["th","en"],"offers":[{"@type":"Offer","name":"Free trial / ทดลองฟรี","price":"0","priceCurrency":"THB"},{"@type":"Offer","name":"7 days","price":"19","priceCurrency":"THB"},{"@type":"Offer","name":"30 days","price":"49","priceCurrency":"THB"},{"@type":"Offer","name":"365 days","price":"399","priceCurrency":"THB"}]}]}</script>
+    <!-- seo:head:end -->
     <!-- ไลบรารีทั้งหมดอยู่ในเว็บเราเอง (public/vendor) ไม่โหลดจากภายนอก -->
     <script src="vendor/pdf-lib.min.js" defer></script>
     <script src="vendor/pdf.js" defer></script>
@@ -18,6 +40,7 @@
     <script src="esign.js" defer></script>
     <script src="docx.js" defer></script>
     <script src="ocr.js" defer></script>
+    <script src="analytics.js" defer></script>
 </head>
 <body>
 
@@ -199,6 +222,9 @@
         </div>
     </section>
 
+    <!-- seo:content:start -->
+    <!-- seo:content:end -->
+
     <section id="pricing" aria-labelledby="pricing-title">
         <h2 class="section-title" id="pricing-title" data-i18n="pricing_title">เลือกแพ็กเกจที่เหมาะกับคุณ</h2>
         <p class="section-sub" data-i18n="pricing_sub">จ่ายครั้งเดียว ไม่ต่ออายุอัตโนมัติ ใช้ได้ทุกเครื่องมือ ไม่จำกัดจำนวนครั้ง ไฟล์ใหญ่ได้ และไม่มีโฆษณา</p>
@@ -214,6 +240,23 @@
         <details><summary data-i18n="faq_q4"></summary><p data-i18n="faq_a4"></p></details>
         <details><summary data-i18n="faq_q5"></summary><p data-i18n="faq_a5"></p></details>
     </section>
+    <!-- seo:tools:start -->
+    <section class="seo-tools" aria-labelledby="seo-tools-title">
+        <h2 class="section-title" id="seo-tools-title" data-i18n="seo_tools_title">เครื่องมือทั้งหมด</h2>
+        <ul class="seo-tool-links">
+            <li><a href="image-to-pdf.html" data-tool-link="img2pdf"><span aria-hidden="true">📷</span> <span data-i18n="tab_img2pdf">รูปเป็น PDF</span></a></li>
+            <li><a href="pdf-to-image.html" data-tool-link="pdf2img"><span aria-hidden="true">🖼️</span> <span data-i18n="tab_pdf2img">PDF เป็นรูป</span></a></li>
+            <li><a href="merge-pdf.html" data-tool-link="merge"><span aria-hidden="true">🧩</span> <span data-i18n="tab_merge">รวม PDF</span></a></li>
+            <li><a href="split-pdf.html" data-tool-link="split"><span aria-hidden="true">✂️</span> <span data-i18n="tab_split">แยกหน้า PDF</span></a></li>
+            <li><a href="compress-pdf.html" data-tool-link="compress"><span aria-hidden="true">🗜️</span> <span data-i18n="tab_compress">ลดขนาด PDF</span></a></li>
+            <li><a href="reduce-file-size.html" data-tool-link="shrink"><span aria-hidden="true">📏</span> <span data-i18n="tab_shrink">ย่อให้ได้ขนาด</span></a></li>
+            <li><a href="id-card-watermark.html" data-tool-link="watermark"><span aria-hidden="true">🪪</span> <span data-i18n="tab_watermark">ลายน้ำสำเนา</span></a></li>
+            <li><a href="sign-pdf.html" data-tool-link="sign"><span aria-hidden="true">✍️</span> <span data-i18n="tab_sign">เซ็นเอกสาร</span></a></li>
+            <li><a href="pdf-to-word.html" data-tool-link="pdf2word"><span aria-hidden="true">📝</span> <span data-i18n="tab_pdf2word">PDF เป็น Word</span></a></li>
+            <li><a href="pdf-to-excel.html" data-tool-link="pdf2excel"><span aria-hidden="true">📊</span> <span data-i18n="tab_pdf2excel">PDF เป็น Excel</span></a></li>
+        </ul>
+    </section>
+    <!-- seo:tools:end -->
 </main>
 
 <footer class="foot">

@@ -1,7 +1,7 @@
 /* Service worker: เก็บไฟล์ของเว็บไว้ในเครื่อง เพื่อใช้งานได้แม้ไม่มีอินเทอร์เน็ต
    (และเป็นวิธีพิสูจน์ว่าการประมวลผลไม่ต้องส่งไฟล์ออกไป: เปิดโหมดเครื่องบินแล้วลองใช้ได้)
    ไม่แตะ /api/ เลย: เรียกเซิร์ฟเวอร์ตรง ๆ เสมอ */
-const CACHE = "ec-v20";
+const CACHE = "ec-v22";
 const CORE = [
   "./", "index.html", "styles.css", "app.js", "esign.js", "docx.js", "translations.js", "ocr.js", "theme.js",
   "vendor/pdf-lib.min.js", "vendor/pdf.js", "vendor/pdf.worker.js", "vendor/jszip.min.js",
@@ -9,6 +9,8 @@ const CORE = [
   "vendor/fonts/plex-thai-SemiBold.woff", "vendor/fonts/plex-thai-Bold.woff",
   "vendor/fonts/sriracha-Regular.woff", "vendor/fonts/charmonman-Bold.woff",
   "privacy.html", "terms.html", "guide.html", "guide-en.html", "guide.css", "guide.js",
+  "image-to-pdf.html", "pdf-to-image.html", "merge-pdf.html", "split-pdf.html", "compress-pdf.html", "reduce-file-size.html", "id-card-watermark.html", "sign-pdf.html", "pdf-to-word.html", "pdf-to-excel.html",
+  "analytics.js", "manifest.webmanifest", "icon-192.png", "icon-512.png", "icon-maskable-512.png", "apple-touch-icon.png",
 ];
 
 self.addEventListener("install", (e) => {
@@ -22,7 +24,7 @@ self.addEventListener("activate", (e) => {
 self.addEventListener("fetch", (e) => {
   const req = e.request;
   const url = new URL(req.url);
-  if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
+  if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/") || url.pathname.startsWith("/_vercel/")) return;
   // เครือข่ายก่อน (ได้เวอร์ชันใหม่เสมอเมื่อออนไลน์) ไม่มีเน็ตค่อยใช้ที่เก็บไว้
   e.respondWith(
     fetch(req)

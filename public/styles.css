@@ -279,3 +279,15 @@ body { overflow-x: hidden; overflow-x: clip; }
   .link-verify + .link-verify { margin-left: 0; }
   .card { padding: 16px; }
 }
+/* seo: เนื้อหาใต้เครื่องมือ + ลิงก์ไปทุกเครื่องมือ */
+html[lang="en"] .seo[data-seo-lang="th"], html:not([lang="en"]) .seo[data-seo-lang="en"] { display: none; }
+.seo { margin-top: 34px; }
+.seo .section-title { margin-top: 26px; font-size: 20px; }
+.seo .section-title:first-child { margin-top: 0; }
+.seo-steps, .seo-uses { margin: 8px 0 0; padding-left: 22px; }
+.seo-steps li, .seo-uses li { margin: 6px 0; }
+.seo-rel, .seo-tool-links { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; margin: 10px 0 0; padding: 0; }
+.seo-rel a, .seo-tool-links a { display: inline-block; padding: 8px 14px; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); color: var(--ink); text-decoration: none; font-weight: 600; font-size: 14.5px; }
+.seo-rel a:hover, .seo-tool-links a:hover { border-color: var(--stamp); color: var(--stamp); }
+.seo-note { margin: 18px 0 0; color: var(--muted); font-size: 13.5px; }
+.seo-tools { margin-top: 10px; }
