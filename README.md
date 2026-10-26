@@ -16,3 +16,16 @@
 4. Redeploy แล้วทดสอบด้วยบัตรทดสอบ 4242 4242 4242 4242 ก่อนเปลี่ยนเป็น sk_live_
 
 รันในเครื่อง: `npx vercel dev`
+
+## หน้า SEO ต่อเครื่องมือ
+ 
+หน้า `public/merge-pdf.html` และอีก 9 หน้า, `sitemap.xml`, `robots.txt` ถูก**สร้างอัตโนมัติ**จาก `public/index.html` กับ `scripts/seo-data.js`
+- แก้ข้อความ SEO: แก้ `scripts/seo-data.js` แล้วรัน `node scripts/build-seo.js`
+- แก้โครงหน้า `public/index.html`: รัน `node scripts/build-seo.js` ทุกครั้งเพื่อให้ทั้ง 10 หน้าตามทัน (`node scripts/build-seo.js --check` ใช้ตรวจ)
+- เปลี่ยนโดเมน: `SITE_URL=https://โดเมน node scripts/build-seo.js`
+- ห้ามแก้ด้วยมือในช่วงระหว่าง `seo:head`, `seo:content`, `seo:tools` (index.html) และ `seo:keys` (translations.js)
+
+## ตัวนับการเข้าชม และการติดตั้งเป็นแอป
+ 
+- ตัวนับ: `public/analytics.js` โหลด Vercel Web Analytics เฉพาะบนเว็บจริง (ไม่ทำงานบน localhost, เมื่อมี Do Not Track / Global Privacy Control, หรือผู้ใช้กดปิดในหน้า privacy.html) ต้องเปิด **Analytics → Enable** ในแดชบอร์ด Vercel ก่อนจึงจะมีข้อมูล ถ้าแก้ตัวนับ ต้องแก้หัวข้อ "การนับสถิติการเข้าชม" ใน privacy.html ให้ตรงด้วย
+- แอป: `public/manifest.webmanifest` + ไอคอน `icon-*.png`, `apple-touch-icon.png` ถ้าติดตั้งแล้วมีปัญหา (เช่น บันทึกไฟล์บน iPad) ให้แก้ `"display": "standalone"` เป็น `"browser"`
