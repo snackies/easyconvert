@@ -1,0 +1,6 @@
+ไฟล์ในโฟลเดอร์นี้ใช้สำหรับ OCR (อ่านตัวหนังสือจากภาพ) ทำงานในเบราว์เซอร์ของผู้ใช้เท่านั้น
+Files here power in-browser OCR. They are third-party software, redistributed unmodified under the Apache License 2.0:
+- Tesseract.js 7.0.0 (tesseract.min.js, worker.min.js) https://github.com/naptha/tesseract.js
+- Tesseract.js-core 7.0.0 (tesseract-core-*.wasm.js; includes Tesseract OCR engine and Leptonica) https://github.com/naptha/tesseract.js-core
+- tessdata_fast (tha.traineddata, eng.traineddata) https://github.com/tesseract-ocr/tessdata_fast
+License text: https://www.apache.org/licenses/LICENSE-2.0

@@ -7,7 +7,8 @@
  *  3) ดึงรูปจากรายการคำสั่งของหน้า (ติดตามเมทริกซ์ตำแหน่ง) แล้ววางตามลำดับบนลงล่าง
  *  4) ประกอบไฟล์ .docx (ZIP + XML) ด้วย JSZip โดยแต่ละหน้า PDF = 1 section ตามขนาดและขอบเดิม
  *
- * ข้อจำกัดที่ตั้งใจ: ไม่สร้างตารางจริง ไม่รองรับข้อความแนวตั้ง/เฉียง PDF สแกนต้องใช้ OCR
+ * หน้าที่เป็นภาพสแกนหรือตัวอักษรถูกแปลงเป็นเส้นวาด: ใช้ OCR (ocr.js) อ่านข้อความแล้วรวมกับข้อความจริง
+ * ข้อจำกัดที่ตั้งใจ: ไม่สร้างตารางจริง ไม่รองรับข้อความแนวตั้ง/เฉียง ผล OCR อาจมีตัวอักษรผิดจึงมีคำเตือนให้ตรวจทาน
  */
 (function () {
   "use strict";
@@ -17,6 +18,8 @@
 
   const THAI = /[฀-๿]/;
   const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  const OCR_SCALE = 200 / 72; // ความละเอียดภาพที่ส่งให้ OCR (ประมาณ 200 dpi)
+  const MAX_OCR_PAGES = 20; // จำกัดจำนวนหน้าที่ใช้ OCR ต่อไฟล์ (หน้าที่เกินใช้วิธีเดิมพร้อมคำเตือน)
   const MAX_IMG_EDGE = 2400; // พิกเซลด้านยาวสุดของรูปที่ฝัง
 
   /* ---------- XML ---------- */
@@ -103,10 +106,33 @@
     g.fillStyle = "#fff";
     g.fillRect(0, 0, dst.width, dst.height);
     g.drawImage(src, 0, 0, dst.width, dst.height);
+    // แผนที่ส่วนที่มีเนื้อภาพจริง (ไม่ใช่พื้นขาว/โปร่งใส) ใช้กันไม่ให้ OCR ไปอ่านลายมือ/ลายเซ็น/โลโก้เป็นตัวหนังสือ
+    let ink = null;
+    try {
+      const ps = Math.min(1, 200 / Math.max(dst.width, dst.height));
+      const pw = Math.max(1, Math.round(dst.width * ps)), ph = Math.max(1, Math.round(dst.height * ps));
+      const probe = EC.newCanvas(pw, ph);
+      const pg = probe.getContext("2d");
+      pg.drawImage(dst, 0, 0, pw, ph);
+      const px = pg.getImageData(0, 0, pw, ph).data;
+      const raw = new Uint8Array(pw * ph);
+      for (let i = 0; i < pw * ph; i++) if (Math.min(px[i * 4], px[i * 4 + 1], px[i * 4 + 2]) < 235) raw[i] = 1;
+      const grid = new Uint8Array(pw * ph); // ขยายออก 1 ช่อง เพื่อให้ครอบเส้นที่บาง
+      for (let y = 0; y < ph; y++) for (let x = 0; x < pw; x++) if (raw[y * pw + x]) {
+        for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) {
+          const xx = x + dx, yy = y + dy;
+          if (xx >= 0 && yy >= 0 && xx < pw && yy < ph) grid[yy * pw + xx] = 1;
+        }
+      }
+      EC.freeCanvas(probe);
+      ink = { pw, ph, grid };
+    } catch (e) {}
     const blob = await EC.canvasToBlob(dst, "image/jpeg", 0.86);
     EC.freeCanvas(src);
     EC.freeCanvas(dst);
-    return new Uint8Array(await blob.arrayBuffer());
+    const outBytes = new Uint8Array(await blob.arrayBuffer());
+    outBytes.ink = ink;
+    return outBytes;
   }
 
   /* ---------- ดึงข้อมูลหน้า ---------- */
@@ -212,6 +238,13 @@
       if (fn === OPS.save) stack.push(ctm.slice());
       else if (fn === OPS.restore) ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
       else if (fn === OPS.transform) ctm = mul(args, ctm);
+      else if (fn === OPS.beginAnnotation) { // ลายเซ็น/ปากกา/แสตมป์ที่เป็น annotation วาดจากพิกัดหน้าเสมอ (ไม่ใช่ตามเมทริกซ์ก่อนหน้า)
+        stack.push(ctm.slice());
+        ctm = [1, 0, 0, 1, 0, 0];
+        if (args && args[2]) ctm = mul(args[2], ctm);
+        if (args && args[3]) ctm = mul(args[3], ctm);
+      }
+      else if (fn === OPS.endAnnotation) ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
       else if (fn === OPS.paintFormXObjectBegin) { stack.push(ctm.slice()); if (args && args[0]) ctm = mul(args[0], ctm); }
       else if (fn === OPS.paintFormXObjectEnd) ctm = stack.pop() || [1, 0, 0, 1, 0, 0];
       else if (fn === OPS.paintImageXObject || fn === OPS.paintInlineImageXObject || (OPS.paintJpegXObject && fn === OPS.paintJpegXObject)) {
@@ -226,7 +259,100 @@
     return found;
   }
 
-  async function extractPage(pdfjs, pageNum, imgCache) {
+  /* ---------- OCR: แปลงผลที่อ่านได้เป็นบรรทัดแบบเดียวกับข้อความจริง ---------- */
+  // คำนี้ทับกับส่วนที่มีเนื้อภาพจริงของรูปที่วางไว้แล้ว (ลายมือ โลโก้) หรือไม่
+  function inkHit(im, x0, y0, x1, y1) {
+    const g = im.ink;
+    if (x1 < im.left || x0 > im.left + im.w || y1 < im.top || y0 > im.top + im.h) return false;
+    if (!g) return true;
+    const gx0 = Math.max(0, Math.floor(((x0 - im.left) / im.w) * g.pw)), gx1 = Math.min(g.pw - 1, Math.ceil(((x1 - im.left) / im.w) * g.pw));
+    const gy0 = Math.max(0, Math.floor(((y0 - im.top) / im.h) * g.ph)), gy1 = Math.min(g.ph - 1, Math.ceil(((y1 - im.top) / im.h) * g.ph));
+    let hit = 0, all = 0;
+    for (let y = gy0; y <= gy1; y++) for (let x = gx0; x <= gx1; x++) { all++; if (g.grid[y * g.pw + x]) hit++; }
+    return all > 0 && hit / all >= 0.2;
+  }
+  const LETTER = /[\p{L}\p{N}\p{M}]/u; // รวมสระ/วรรณยุกต์ไทย (Tesseract ส่งมาเป็นคำแยก)
+  function ocrToLines(found, sc, realLines, maskImgs) {
+    const out = [];
+    for (const fl of found) {
+      const words = [];
+      for (const w of fl.words) {
+        if (w.conf < 30) continue;
+        if (!LETTER.test(w.text) && !(w.conf >= 70 && /^[()\/:,.;'’"%&@+#]$/.test(w.text))) continue;
+        const x0 = w.x0 / sc, x1 = w.x1 / sc, y0 = w.y0 / sc, y1 = w.y1 / sc;
+        const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        if (y1 - y0 < 3 || y1 - y0 > 90) continue;
+        // ข้ามคำที่อยู่ในรูปที่เราวางไว้แล้ว (โลโก้ ลายเซ็น) และข้อความจริงที่ดึงได้อยู่แล้ว
+        if (maskImgs.some((im) => inkHit(im, x0, y0, x1, y1))) continue;
+        if (realLines.some((l) => cx > l.left - 3 && cx < l.right + 3 && cy > l.y - 0.95 * l.size && cy < l.y + 0.3 * l.size)) continue;
+        words.push({ text: w.text, x0, x1, y0, y1 });
+      }
+      if (!words.length) continue;
+      const kept = fl.words.filter((w) => w.conf >= 30 && LETTER.test(w.text));
+      const mean = kept.reduce((a, w) => a + w.conf, 0) / Math.max(1, kept.length);
+      if (mean < 45) continue;
+      words.sort((a, b) => a.x0 - b.x0);
+      const bottom = words.map((w) => w.y1).sort((a, b) => a - b)[Math.floor(0.5 * (words.length - 1))]; // ฐานบรรทัดจากค่ากลาง ไม่ถูกลายมือดึงเพี้ยน
+      // ขนาดตัวอักษรประมาณจากความสูงของคำภาษาอังกฤษ (กรอบของตัวไทยสูงไม่สม่ำเสมอจึงไม่ใช้)
+      const lat = words.filter((w) => /^[A-Za-z][A-Za-z']{2,}$/.test(w.text)).map((w) => w.y1 - w.y0).sort((a, b) => a - b);
+      const est = lat.length >= 2 ? 1.2 * lat[Math.floor((lat.length - 1) / 2)] : null;
+      const size = est || 10;
+      const segs = [];
+      let seg = null, prev = null;
+      for (const w of words) {
+        if (!seg || w.x0 - prev.x1 > 1.0 * size) { seg = { x: w.x0, end: w.x1, runs: [{ text: w.text, size, bold: false, italic: false }] }; segs.push(seg); }
+        else {
+          const joinThai = THAI.test(prev.text.slice(-1)) && THAI.test(w.text.charAt(0));
+          seg.runs[0].text += (joinThai ? "" : " ") + w.text; seg.end = w.x1;
+        }
+        prev = w;
+      }
+      segs.forEach((s) => { s.runs[0].text = s.runs[0].text.replace(/\u0E4D\u0E32/g, "\u0E33"); }); // นิคหิต+สระอา -> สระอำ
+      const chars = segs.reduce((n, s) => n + s.runs[0].text.length, 0);
+      out.push({
+        y: bottom, size, est, left: segs[0].x, right: segs[segs.length - 1].end,
+        segs, hasTab: segs.length > 1, chars, bold: false, lastSegStart: segs[segs.length - 1].x, fromOcr: true,
+      });
+    }
+    // ตัวอักษรทั้งหน้ามักขนาดเดียวกัน: ใช้ค่ากลางของบรรทัดที่วัดได้ ยกเว้นบรรทัดที่ต่างชัดเจน (หัวเรื่อง/ตัวอักษรเล็ก)
+    const ests = out.filter((l) => l.est).map((l) => l.est).sort((a, b) => a - b);
+    const body = ests.length ? ests[Math.floor((ests.length - 1) / 2)] : 11;
+    const byY = out.slice().sort((a, b) => a.y - b.y);
+    let prevEst = null;
+    byY.forEach((l) => {
+      // บรรทัดที่วัดเองไม่ได้ (ไทยล้วน/มีคำอังกฤษคำเดียว) ใช้ขนาดของบรรทัดที่อยู่ติดกันด้านบน
+      if (!l.est && prevEst && l.y - prevEst.y < 2.2 * prevEst.est) l.est2 = prevEst.est;
+      if (l.est) prevEst = l;
+    });
+    out.forEach((l) => {
+      const e = l.est || l.est2 || null;
+      const r = e ? e / body : 1;
+      const target = Math.min(32, Math.max(6, !e || (r >= 0.75 && r <= 1.35) ? body : e));
+      l.size = target;
+      l.segs.forEach((sg) => { sg.runs[0].size = target; });
+    });
+    return out;
+  }
+
+  // รวมข้อความจริงกับที่ OCR อ่านได้ ถ้าอยู่แถวเดียวกันและไม่ทับกันให้เป็นบรรทัดเดียว (คั่นด้วยแท็บ)
+  function mergeLines(real, ocr) {
+    const out = ocr.slice();
+    for (const rl of real) {
+      const host = out.find((o) =>
+        o.fromOcr && Math.abs(o.y - rl.y) <= 0.8 * Math.min(o.size, rl.size) &&
+        !o.segs.some((s) => rl.left < s.end + 2 && rl.right > s.x - 2));
+      if (host) {
+        const add = rl.segs.map((s, k) => ({ x: s.x, end: k < rl.segs.length - 1 ? rl.segs[k + 1].x : rl.right, runs: s.runs }));
+        host.segs = host.segs.concat(add).sort((a, b) => a.x - b.x);
+        host.hasTab = host.segs.length > 1;
+        host.left = Math.min(host.left, rl.left); host.right = Math.max(host.right, rl.right);
+        host.chars += rl.chars; host.lastSegStart = host.segs[host.segs.length - 1].x;
+      } else out.push(rl);
+    }
+    return out.sort((a, b) => a.y - b.y || a.left - b.left);
+  }
+
+  async function extractPage(pdfjs, pageNum, imgCache, opts) {
     const page = await pdfjs.getPage(pageNum);
     const vp = page.getViewport({ scale: 1 });
     const tc = await page.getTextContent();
@@ -238,8 +364,10 @@
     const pageArea = vp.width * vp.height;
     const imgs = [];
     let skippedFull = false;
+    let scanFull = false;
     for (const f of await extractImages(page, vp, opList)) {
       if (f.w < 12 || f.h < 12 || f.w * f.h < 400) continue;
+      if (textChars < 20 && f.w * f.h >= 0.3 * pageArea) scanFull = true;
       if (textChars >= 20 && f.w * f.h >= 0.85 * pageArea) { skippedFull = true; continue; } // ภาพพื้นหลัง/ชั้นภาพของ PDF ที่มีข้อความจริง
       const key = pageNum + ":" + (typeof f.ref === "string" ? f.ref : "inline" + imgs.length);
       let bytes = imgCache.get(key);
@@ -248,14 +376,38 @@
         bytes = await imageToJpeg(obj);
         if (bytes) imgCache.set(key, bytes);
       }
-      if (bytes) imgs.push({ top: f.top, left: f.left, w: f.w, h: f.h, bytes });
+      if (bytes && bytes.ink && bytes.ink.grid.indexOf(1) < 0) continue; // รูปว่างทั้งภาพ (พื้นขาว/โปร่งใส) ไม่ต้องใส่ เพราะจะไปบังรูปอื่น
+      if (bytes) imgs.push({ top: f.top, left: f.left, w: f.w, h: f.h, bytes, ink: bytes.ink || null });
     }
     imgs.sort((a, b) => a.top - b.top);
-    if (page.cleanup) page.cleanup();
     // ตัวอักษรที่ถูกแปลงเป็นเส้นวาด (เช่น ฟอร์มที่บันทึกจาก iPhone/iPad) ไม่มีข้อความให้ดึง นับคำสั่งระบายสีเส้นเพื่อตรวจ
     let fills = 0;
     for (const fn of opList.fnArray) if (fn === pdfjsLib.OPS.fill || fn === pdfjsLib.OPS.eoFill || fn === pdfjsLib.OPS.fillStroke || fn === pdfjsLib.OPS.eoFillStroke) fills++;
-    return { w: vp.width, h: vp.height, lines, imgs, textChars, unmapped: lines.unmapped || 0, flat: textChars < 200 && (skippedFull || fills >= 150) };
+    const flat = textChars < 200 && (skippedFull || fills >= 150);
+    let allLines = lines, ocrChars = 0, ocrUsed = false, ocrTried = false;
+    if (opts && opts.ocr && EC.ocr && (flat || scanFull)) {
+      ocrTried = true;
+      try {
+        if (opts.status && !(EC.ocr.isReady && EC.ocr.isReady())) opts.status("load", 0);
+        const canvas = await EC.renderPageToCanvas(page, OCR_SCALE);
+        const sc = canvas.width / vp.width;
+        let found;
+        try { found = await EC.ocr.recognize(canvas, (p) => { if (opts.status) opts.status("run", p); }); }
+        finally { EC.freeCanvas(canvas); }
+        const isScan = (im) => scanFull && im.w * im.h >= 0.3 * pageArea; // ภาพสแกนของหน้าเอง ไม่ใช่โลโก้/ลายเซ็น
+        const mask = imgs.filter((im) => !isScan(im) && im.w * im.h < 0.85 * pageArea);
+        const olines = ocrToLines(found, sc, lines, mask);
+        const n = olines.reduce((a, l) => a + l.chars, 0);
+        if (n >= 10) {
+          const merged = mergeLines(lines, olines);
+          merged.unmapped = lines.unmapped;
+          allLines = merged; ocrChars = n; ocrUsed = true;
+          for (let k = imgs.length - 1; k >= 0; k--) if (isScan(imgs[k])) imgs.splice(k, 1);
+        }
+      } catch (e) { ocrUsed = false; }
+    }
+    if (page.cleanup) page.cleanup();
+    return { w: vp.width, h: vp.height, lines: allLines, imgs, textChars, ocrChars, ocr: ocrUsed, ocrTried, unmapped: lines.unmapped || 0, flat: flat && !ocrUsed };
   }
 
   /* ---------- จัดย่อหน้า ---------- */
@@ -311,7 +463,7 @@
     // o: before, line, indLeft, indFirst, jc, tabs[], sect
     let ppr = "";
     if (o.tabs && o.tabs.length) ppr += "<w:tabs>" + o.tabs.map((x) => '<w:tab w:val="left" w:pos="' + x + '"/>').join("") + "</w:tabs>";
-    ppr += '<w:spacing w:before="' + o.before + '" w:after="0" w:line="' + o.line + '" w:lineRule="atLeast"/>';
+    ppr += '<w:spacing w:before="' + o.before + '" w:after="0" w:line="' + o.line + '" w:lineRule="' + (o.exact ? "exact" : "atLeast") + '"/>'; // exact: หน้าที่ใช้ OCR ต้องไม่ให้ความสูงบรรทัดสะสมจนล้นหน้า
     if (o.indLeft || o.indFirst) {
       ppr += '<w:ind w:left="' + Math.max(0, o.indLeft) + '"' +
         (o.indFirst > 0 ? ' w:firstLine="' + o.indFirst + '"' : o.indFirst < 0 ? ' w:hanging="' + -o.indFirst + '"' : "") + "/>";
@@ -330,6 +482,22 @@
       '<pic:blipFill><a:blip r:embed="' + rid + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
       '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
       "</pic:pic></a:graphicData></a:graphic></wp:inline></w:drawing></w:r>";
+  }
+
+  // รูปลอยตามตำแหน่งจริงบนหน้า (ไม่ดันข้อความ) ใช้กับหน้าที่ใช้ OCR เพราะข้อความถูกจัดเรียงใหม่แล้วรูปจึงต้องไม่ขยับตามการไหลของข้อความ
+  function anchorRunXml(rid, id, cx, cy, x, y) {
+    return "<w:r><w:drawing>" +
+      '<wp:anchor distT="0" distB="0" distL="0" distR="0" simplePos="0" relativeHeight="' + (100 + id) + '" behindDoc="1" locked="0" layoutInCell="1" allowOverlap="1">' +
+      '<wp:simplePos x="0" y="0"/>' +
+      '<wp:positionH relativeFrom="page"><wp:posOffset>' + x + "</wp:posOffset></wp:positionH>" +
+      '<wp:positionV relativeFrom="page"><wp:posOffset>' + y + "</wp:posOffset></wp:positionV>" +
+      '<wp:extent cx="' + cx + '" cy="' + cy + '"/><wp:effectExtent l="0" t="0" r="0" b="0"/><wp:wrapNone/>' +
+      '<wp:docPr id="' + id + '" name="Picture ' + id + '"/><wp:cNvGraphicFramePr/>' +
+      '<a:graphic><a:graphicData uri="http://schemas.openxmlformats.org/drawingml/2006/picture">' +
+      '<pic:pic><pic:nvPicPr><pic:cNvPr id="' + id + '" name="image' + id + '.jpg"/><pic:cNvPicPr/></pic:nvPicPr>' +
+      '<pic:blipFill><a:blip r:embed="' + rid + '"/><a:stretch><a:fillRect/></a:stretch></pic:blipFill>' +
+      '<pic:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="' + cx + '" cy="' + cy + '"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></pic:spPr>' +
+      "</pic:pic></a:graphicData></a:graphic></wp:anchor></w:drawing></w:r>";
   }
 
   const emu = (pt) => Math.max(1, Math.round(pt * 12700));
@@ -362,7 +530,7 @@
 
       // รวมรูปที่อยู่แถวเดียวกันและต่อชิดกัน (ภาพที่ถูกแบ่งเป็นชิ้น) เป็นแถวเดียว
       const rows = [];
-      pg.imgs.forEach((im) => {
+      (pg.ocr ? [] : pg.imgs).forEach((im) => {
         const row = rows.find((r) => {
           const ov = Math.min(r.top + r.h, im.top + im.h) - Math.max(r.top, im.top);
           const near = Math.abs(im.left - r.right) < 3 || Math.abs(r.left - (im.left + im.w)) < 3;
@@ -412,12 +580,12 @@
         const p = b.p;
         const n = p.lines.length;
         const pitch = n > 1 ? (p.lines[n - 1].y - p.lines[0].y) / (n - 1) : p.size * 1.2;
-        const lineH = Math.max(p.size * 1.15, pitch);
+        const lineH = Math.max(p.size * (pg.ocr ? 1.4 : 1.15), pitch);
         const fb = p.lines[0].y;
         const rawBefore = fb - 0.8 * lineH - cursor;
         const heightPt = n * lineH;
         const before = clamp(tw(Math.max(0, rawBefore)), 0, tw(Math.max(0, contentH - used - heightPt)));
-        const o = { before, line: tw(lineH), indLeft: 0, indFirst: 0, jc: null, tabs: null };
+        const o = { before, line: tw(lineH), indLeft: 0, indFirst: 0, jc: null, tabs: null, exact: !!pg.ocr };
         let inner = "";
         if (p.segs) {
           // บรรทัดที่มีหลายคอลัมน์: ใช้แท็บ ตำแหน่งเดิมของแต่ละคอลัมน์
@@ -449,6 +617,18 @@
         cursor = p.lines[n - 1].y + 0.2 * lineH;
       });
 
+      if (pg.ocr && pg.imgs.length) {
+        let floats = "";
+        pg.imgs.forEach((im) => {
+          imgNo++;
+          const rid = "rIdImg" + imgNo;
+          zip.file("word/media/image" + imgNo + ".jpg", im.bytes);
+          rels.push('<Relationship Id="' + rid + '" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="media/image' + imgNo + '.jpg"/>');
+          floats += anchorRunXml(rid, imgNo, emu(im.w), emu(im.h), Math.round(im.left * 12700), Math.round(im.top * 12700));
+        });
+        if (xml.length) xml[0] = xml[0].replace("</w:pPr>", "</w:pPr>" + floats);
+        else xml.push(paraXml(floats, { before: 0, line: 240, indLeft: 0, indFirst: 0, jc: null, tabs: null }));
+      }
       if (!xml.length) xml.push(paraXml("", { before: 0, line: 240, indLeft: 0, indFirst: 0, jc: null, tabs: null }));
       if (pi < pages.length - 1) {
         // ฝังการขึ้นหน้าใหม่ไว้ในย่อหน้าสุดท้าย ไม่เพิ่มย่อหน้าว่าง (กันหน้าว่างเกิน)
@@ -500,24 +680,37 @@
     const pdfjs = await EC.loadPdfJs(file);
     const pages = [];
     const imgCache = new Map();
-    let chars = 0, unmapped = 0;
-    for (let i = 1; i <= pdfjs.numPages; i++) {
-      EC.setPageStatus(i, pdfjs.numPages);
-      const pg = await extractPage(pdfjs, i, imgCache);
-      chars += pg.textChars;
-      unmapped += pg.unmapped;
-      pages.push(pg);
+    let chars = 0, unmapped = 0, ocrTries = 0;
+    try {
+      for (let i = 1; i <= pdfjs.numPages; i++) {
+        EC.setPageStatus(i, pdfjs.numPages);
+        const opts = {
+          ocr: ocrTries < MAX_OCR_PAGES,
+          status: (kind, p) => {
+            EC.$("file-status").textContent = kind === "load" ? t("dw_ocr_load") : fmt(t("dw_ocr_run"), { i, n: pdfjs.numPages, p: Math.round((p || 0) * 100) });
+            EC.setProgress((i - 1 + (kind === "run" ? (p || 0) : 0)) / pdfjs.numPages);
+          },
+        };
+        const pg = await extractPage(pdfjs, i, imgCache, opts);
+        if (pg.ocrTried) ocrTries++;
+        chars += pg.textChars + (pg.ocrChars || 0);
+        unmapped += pg.unmapped;
+        pages.push(pg);
+      }
+    } finally {
+      if (EC.ocr) await EC.ocr.terminate();
     }
     if (chars < 10) throw new Error(t("dw_scan"));
     const { blob, images } = await buildDocx(pages);
     EC.download(blob, EC.baseName(file.name) + ".docx", DOCX_TYPE);
     const warn = unmapped ? " " + fmt(t("dw_warn"), { n: unmapped }) : "";
-    const flatPages = [];
-    pages.forEach((pg, i) => { if (pg.flat) flatPages.push(i + 1); });
+    const ocrPages = [], flatPages = [];
+    pages.forEach((pg, i) => { if (pg.ocr) ocrPages.push(i + 1); if (pg.flat) flatPages.push(i + 1); });
+    const ocrNote = ocrPages.length ? " ⚠ " + fmt(t("dw_ocr"), { list: ocrPages.join(", ") }) : "";
     const flatWarn = flatPages.length ? " ⚠ " + fmt(t("dw_flat"), { list: flatPages.join(", ") }) : "";
-    return { message: fmt(t("dw_done"), { pages: pages.length, imgs: images }) + warn + flatWarn };
+    return { message: fmt(t("dw_done"), { pages: pages.length, imgs: images }) + warn + ocrNote + flatWarn };
   }
 
   EC.tools.pdf2word = { run };
-  EC.docx = { extractPage, buildDocx, groupParagraphs, buildLines }; // ใช้ในการทดสอบอัตโนมัติ
+  EC.docx = { extractPage, buildDocx, groupParagraphs, buildLines, ocrToLines, mergeLines }; // ใช้ในการทดสอบอัตโนมัติ
 })();
