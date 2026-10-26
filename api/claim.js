@@ -1,6 +1,7 @@
 const { sign, readBody } = require("../lib/token");
 const { PLANS, getPlan } = require("../lib/plans");
 const { limited } = require("../lib/ratelimit");
+const { chain } = require("../lib/stack");
 
 // ตั้ง PASS_DAYS ใน Vercel ชั่วคราวเพื่อทดสอบการหมดอายุ (เช่น 0.01 ≈ 14 นาที) แล้วลบออกทุกครั้ง
 function daysFor(plan) {
@@ -63,6 +64,26 @@ function planOf(s) {
   return null;
 }
 
+// รายการชำระเงินทั้งหมดของอีเมลนี้ (ใหม่สุดก่อน) พร้อมข้อมูลการคืนเงิน
+async function listSessionsByEmail(email, key) {
+  const out = new Map();
+  for (const e of new Set([email, email.toLowerCase()])) {
+    const q = new URLSearchParams();
+    q.append("limit", "100");
+    q.append("customer_details[email]", e);
+    q.append("expand[]", "data.payment_intent.latest_charge");
+    const list = await stripeGet(STRIPE + "?" + q.toString(), key);
+    for (const x of list.data || []) out.set(x.id, x);
+  }
+  return [...out.values()];
+}
+ 
+// คืนเงินเต็มจำนวนแล้ว = ไม่นับเป็นสิทธิ์
+function isRefunded(s) {
+  const ch = s.payment_intent && s.payment_intent.latest_charge;
+  return !!(ch && typeof ch === "object" && ch.refunded === true);
+}
+ 
 module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (req.method !== "POST") return res.status(405).json({ error: "method_not_allowed" });

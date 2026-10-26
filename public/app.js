@@ -389,7 +389,18 @@
     renderBadge();
   }
  
-  function grantAccess(token, exp) {
+  function grantAccess(token, exp, info) {
+    info = info || {};
+    const have = isPremiumUser ? readLocalExp() : 0;
+    if (exp && have && exp <= have) {
+      // สิทธิ์เดิมยาวเท่ากันหรือกว่าอยู่แล้ว: ไม่เปลี่ยนโทเค็น (ไม่ให้สิทธิ์ลดลง)
+      clearPending();
+      closeGateModal();
+      closeRestoreModal();
+      updateStatus();
+      alert(t(info.fresh ? "alert_pay_no_stack" : "alert_have_longer"));
+      return;
+    }
     store.set("ec_token", token);
     clearPending();
     isPremiumUser = true;
@@ -398,7 +409,7 @@
     closeGateModal();
     closeRestoreModal();
     updateStatus();
-    alert(t("alert_pay_done"));
+    alert(t(info.extended ? "alert_pay_extended" : "alert_pay_done"));
   }
  
   async function claimPaidSession() {
@@ -414,21 +425,23 @@
     }
     const sid = store.get(PENDING_KEY);
     if (!sid) return false;
-    if (isPremiumUser) {
-      clearPending();
-      return true;
-    }
+    // ซื้อเพิ่มตอนมีสิทธิ์อยู่แล้ว: ให้เซิร์ฟเวอร์ต่อวันให้ (ทำเงียบ ๆ ถ้าไม่ได้เพิ่งกลับมาจากหน้าชำระเงิน)
+    const quiet = isPremiumUser && !urlSid;
     if (claiming) return false;
  
     claiming = true;
-    $("file-status").textContent = t("pay_verifying");
+    if (!quiet) $("file-status").textContent = t("pay_verifying");
     const deadline = Date.now() + 3 * 60 * 1000;
     try {
       for (;;) {
         const { ok, status, data } = await postJSON("/api/claim", { session_id: sid });
         if (ok && data.token) {
-          grantAccess(data.token, data.exp);
+          grantAccess(data.token, data.exp, data);
           return true;
+        }
+        if (quiet) {
+          if (status === 400 || status === 410 || (status === 402 && pendingAgeMs() > 30 * 60 * 1000)) clearPending();
+          return false;
         }
         if (status === 402 && Date.now() < deadline) {
           await sleep(3000); // PromptPay อาจยืนยันช้า รอแล้วลองใหม่
@@ -490,7 +503,7 @@
     try {
       const body = isId ? { session_id: ref } : { email, receipt: ref };
       const { ok, status, data } = await postJSON("/api/claim", body);
-      if (ok && data.token) grantAccess(data.token, data.exp);
+      if (ok && data.token) grantAccess(data.token, data.exp, data);
       else if (status === 404 || status === 400) msg.textContent = t("restore_not_found");
       else if (status === 429) msg.textContent = t("restore_too_many");
       else if (status === 410) msg.textContent = t("restore_expired");
@@ -1079,7 +1092,7 @@
     });
     // กลับมาที่แท็บหลังจ่ายเงิน (เช่น จ่ายผ่านแอปธนาคารแล้วสลับกลับ) ให้ตรวจสิทธิ์ทันที
     document.addEventListener("visibilitychange", () => {
-      if (!document.hidden && store.get(PENDING_KEY) && !isPremiumUser) claimPaidSession();
+      if (!document.hidden && store.get(PENDING_KEY)) claimPaidSession();
     });
     window.addEventListener("pageshow", (e) => { if (e.persisted) checkingOut = false; });
  
