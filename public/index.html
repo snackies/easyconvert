@@ -30,6 +30,13 @@
     </div>
 </header>
 
+<noscript><p class="env-banner">กรุณาเปิดใช้งาน JavaScript เพื่อใช้เว็บนี้ / Please enable JavaScript to use this site.</p></noscript>
+<div class="env-banner" id="env-banner" role="status" hidden>
+    <p id="env-old" data-i18n="env_old" hidden>เบราว์เซอร์นี้อาจไม่รองรับบางเครื่องมือ ลองอัปเดตเบราว์เซอร์ หรือเปิดเว็บนี้ด้วย Chrome หรือ Safari เวอร์ชันล่าสุด</p>
+    <p id="env-inapp" data-i18n="env_inapp" hidden>ดูเหมือนคุณเปิดเว็บจากในแอป (เช่น LINE, Facebook) ซึ่งอาจเลือกไฟล์หรือดาวน์โหลดไฟล์ไม่ได้ แนะนำให้เปิดด้วย Safari หรือ Chrome</p>
+    <button type="button" id="env-copy" class="mini" data-i18n="env_copy" hidden>คัดลอกลิงก์</button>
+</div>
+
 <main>
     <section class="hero">
         <div>
@@ -62,12 +69,12 @@
             <p id="tool-desc"></p>
         </div>
 
-        <div class="drop-zone" id="drop-area" tabindex="0" role="button">
+        <label class="drop-zone" id="drop-area" for="file-input">
             <span class="drop-icon" aria-hidden="true">📥</span>
             <p data-i18n-html="drop_instruction">ลากไฟล์มาวางที่นี่ หรือ <strong>แตะเพื่อเลือกไฟล์</strong></p>
             <p class="hint" id="drop-types"></p>
-            <input type="file" id="file-input" hidden multiple>
-        </div>
+            <input type="file" id="file-input" multiple>
+        </label>
         <ul id="file-list" class="file-list"></ul>
 
         <div id="opt-split" class="options is-hidden" data-tool="split">

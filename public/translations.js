@@ -161,6 +161,10 @@ const translations = {
     faq_q5: "PDF เป็น Word และ Excel ทำได้ดีแค่ไหน?",
     faq_a5: "PDF เป็น Word ได้ไฟล์ .docx จริง คงย่อหน้า ขนาดตัวอักษร ตัวหนา และรูป เหมาะกับเอกสารข้อความ แต่ตารางซับซ้อนและหลายคอลัมน์อาจเพี้ยน ส่วน PDF เป็น Excel ดึงเฉพาะข้อความเป็นแถว ทั้งสองยังไม่รองรับ PDF ที่เป็นภาพสแกน (ยังไม่มี OCR)",
     foot_copy: "© 2026 EasyConvert",
+    env_old: "เบราว์เซอร์นี้อาจไม่รองรับบางเครื่องมือ ลองอัปเดตเบราว์เซอร์ หรือเปิดเว็บนี้ด้วย Chrome หรือ Safari เวอร์ชันล่าสุด",
+    env_inapp: "ดูเหมือนคุณเปิดเว็บจากในแอป (เช่น LINE, Facebook) ซึ่งอาจเลือกไฟล์หรือดาวน์โหลดไฟล์ไม่ได้ แนะนำให้เปิดด้วย Safari หรือ Chrome",
+    env_copy: "คัดลอกลิงก์",
+    env_copied: "คัดลอกแล้ว",
     foot_privacy: "ความเป็นส่วนตัวและวิธีตรวจสอบ",
     foot_contact: "ติดต่อเรา"
   },
@@ -326,6 +330,10 @@ const translations = {
     faq_q5: "How good are PDF to Word and Excel?",
     faq_a5: "PDF to Word produces a real .docx keeping paragraphs, font sizes, bold and images. It suits text documents, but complex tables and multi-column layouts may shift. PDF to Excel extracts text rows only. Neither supports scanned PDFs yet (no OCR).",
     foot_copy: "© 2026 EasyConvert",
+    env_old: "This browser may not support some tools. Update it, or open this site in the latest Chrome or Safari.",
+    env_inapp: "It looks like you opened this from inside an app (such as LINE or Facebook), where picking or downloading files may not work. Open it in Safari or Chrome instead.",
+    env_copy: "Copy link",
+    env_copied: "Copied",
     foot_privacy: "Privacy and how to verify",
     foot_contact: "Contact"
   }

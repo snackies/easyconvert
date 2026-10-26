@@ -58,6 +58,44 @@
     if (typeof window[name] === "undefined") throw new Error(t("lib_error"));
   }
  
+  /* ============ ตรวจเบราว์เซอร์ ============ */
+  function checkEnvironment() {
+    const ua = navigator.userAgent || "";
+    const inApp = /\bLine\/|FBAN|FBAV|FB_IAB|Instagram|TikTok|musical_ly|MicroMessenger|Messenger/i.test(ua);
+    let old = false;
+    try {
+      old = !(window.pdfjsLib && window.PDFLib && window.JSZip && window.File && window.Blob && window.Promise &&
+        window.URL && URL.createObjectURL && HTMLCanvasElement.prototype.toBlob);
+    } catch (e) { old = true; }
+    $("env-old").hidden = !old;
+    $("env-inapp").hidden = !inApp;
+    $("env-copy").hidden = !inApp;
+    $("env-banner").hidden = !(old || inApp);
+    $("env-copy").addEventListener("click", () => {
+      const url = location.origin + location.pathname;
+      const btn = $("env-copy");
+      const done = () => { btn.textContent = t("env_copied"); setTimeout(() => { btn.textContent = t("env_copy"); }, 2000); };
+      const fallback = () => {
+        try {
+          const ta = document.createElement("textarea");
+          ta.value = url;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          done();
+        } catch (e) {}
+      };
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(url).then(done, fallback); return; }
+      } catch (e) {}
+      fallback();
+    });
+  }
+
   /* ============ ภาษา / หน้าจอ ============ */
   function changeLanguage(lang) {
     currentLang = lang;
@@ -1011,14 +1049,14 @@
     window.addEventListener("pageshow", (e) => { if (e.persisted) checkingOut = false; });
  
     const input = $("file-input");
-    const drop = $("drop-area");
+    const drop = $("drop-area"); // INPUT_NATIVE_PICKER: label ผูกกับ input เปิดตัวเลือกไฟล์เอง
+    input.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); input.click(); } }); // คีย์บอร์ด: Enter เปิดตัวเลือกไฟล์ (Space เบราว์เซอร์ทำให้เอง)
     input.addEventListener("change", (e) => { setFiles(e.target.files); input.value = ""; });
-    drop.addEventListener("click", () => input.click());
-    drop.addEventListener("keydown", (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); } });
     drop.addEventListener("dragover", (e) => { e.preventDefault(); drop.classList.add("over"); });
     drop.addEventListener("dragleave", () => drop.classList.remove("over"));
     drop.addEventListener("drop", (e) => { e.preventDefault(); drop.classList.remove("over"); setFiles(e.dataTransfer.files); });
  
+    checkEnvironment();
     selectTool("img2pdf");
     changeLanguage(currentLang);
     verifyPremium().then(claimPaidSession);

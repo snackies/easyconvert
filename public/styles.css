@@ -56,6 +56,9 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 3px solid var(--stamp); outline-offset: 2px; }
 [hidden] { display: none !important; }
+.env-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; width: min(100% - 32px, 880px); margin: 6px auto 0; padding: 10px 14px; border-radius: 12px; background: var(--warn-soft); color: var(--warn); font-size: 14px; }
+.env-banner p { margin: 0; flex: 1 1 240px; }
+body { overflow-x: hidden; overflow-x: clip; }
 .is-hidden { display: none; } /* JS สั่งแสดงด้วย style.display ซึ่งชนะ class นี้ */
 .mt12 { margin-top: 12px; }
 .restore-msg { min-height: 18px; margin-top: 8px; font-size: 13px; color: var(--warn); }
@@ -65,7 +68,7 @@ button { cursor: pointer; }
 
 /* ---------- โครงหน้า ---------- */
 .top, main, .foot { width: min(100% - 32px, 880px); margin-inline: auto; }
-.top { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 0 8px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 16px 0 8px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--ink); text-decoration: none; }
 .brand-mark svg { width: 22px; height: auto; display: block; }
 .brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 9px; background: var(--stamp); color: var(--stamp-ink); font-weight: 800; }
@@ -73,6 +76,7 @@ button { cursor: pointer; }
 .lang-select { padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); font-weight: 600; }
 .badge { padding: 9px 16px; border: 0; border-radius: 999px; font-weight: 700; font-size: 14px; white-space: nowrap; background: var(--stamp); color: var(--stamp-ink); }
 .badge.premium { background: var(--gold); color: #3a2700; }
+@media (max-width: 400px) { .brand { font-size: 18px; } .badge { padding: 9px 12px; font-size: 13px; } }
 
 /* ---------- Hero ---------- */
 .hero { display: grid; grid-template-columns: 1fr auto; gap: 20px; align-items: center; padding: 22px 0 18px; }
@@ -90,7 +94,7 @@ button { cursor: pointer; }
 }
 .stamp b { display: block; font-size: 20px; }
 .stamp span { font-size: 13px; font-weight: 700; }
-@keyframes thump { from { transform: rotate(-9deg) scale(1.35); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
+@keyframes thump { from { transform: rotate(-9deg) scale(1.03); opacity: 0; } to { transform: rotate(-9deg) scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .stamp { animation: none; } .progress div { transition: none; } }
 
 /* ---------- วันหมดอายุ ---------- */
@@ -115,6 +119,9 @@ button { cursor: pointer; }
 .ws-head h2 { margin: 0; font-size: 22px; }
 .ws-head p { margin: 4px 0 16px; color: var(--muted); }
 .drop-zone { display: grid; justify-items: center; gap: 2px; padding: 30px 16px; border: 2px dashed var(--stamp); border-radius: 16px; background: var(--stamp-soft); text-align: center; cursor: pointer; }
+.drop-zone { position: relative; }
+.drop-zone input[type="file"] { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); opacity: 0; }
+.drop-zone:focus-within { outline: 3px solid var(--stamp); outline-offset: 3px; }
 .drop-zone.over { background: var(--surface); border-style: solid; }
 .drop-zone .drop-icon { font-size: 38px; }
 .drop-zone p { margin: 0; }
